@@ -1,0 +1,6 @@
+framework module Pods_SwiftChattingWeb {
+  umbrella header "Pods-SwiftChattingWeb-umbrella.h"
+
+  export *
+  module * { export * }
+}
