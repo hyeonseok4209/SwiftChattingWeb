@@ -9,6 +9,7 @@ class ChattingMenuViewController: UIViewController {
     //MARK: Properties
     
     private let tableView = UITableView()
+    private var conversations = [Conversation]()
     
     private var containerView: UIView = {
         let view = UIView()
@@ -32,6 +33,7 @@ class ChattingMenuViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
+        fetchConversations()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -47,6 +49,15 @@ class ChattingMenuViewController: UIViewController {
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true, completion: nil)
     }
+    
+    //MARK: Firebase API
+    
+    func fetchConversations() {
+        Service.fetchConversation { conversations in
+            self.conversations = conversations
+            self.tableView.reloadData()
+        }
+    } 
         
     //MARK: Configures and Helpers
     
@@ -108,12 +119,12 @@ class ChattingMenuViewController: UIViewController {
 
 extension ChattingMenuViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 2
+        return conversations.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath)
-        cell.textLabel?.text = "Test Cell"
+        cell.textLabel?.text = conversations[indexPath.row].message.text
         cell.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
         return cell
     }
