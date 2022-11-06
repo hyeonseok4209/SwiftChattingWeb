@@ -20,6 +20,10 @@ class MessageViewModel {
     var sholudHideProfileImage: Bool {
         return message.isFromCurrentUser
     }
+    
+    var sholudHideNameLabel: Bool {
+        return message.isFromCurrentUser
+    }
             
     init(message: Message){
         self.message = message

@@ -5,6 +5,40 @@ import Firebase
 class SettingMenuViewController: UIViewController {
     //MARK: Properties
     
+    private var user: User?
+    
+    private let profileImageView: UIImageView = {
+        let imageView = UIImageView()
+        
+        imageView.backgroundColor = .lightGray
+        imageView.alpha = 0.5
+        imageView.contentMode = .scaleAspectFit
+        imageView.clipsToBounds = true
+        
+        return imageView
+    }()
+    
+    private let emailLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        
+        return label
+    }()
+    
+    private let nicknameLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+       
+        return label
+    }()
+    
+    private let nameLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        
+        return label
+    }()
+    
     let logoutButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Log Out", for: .normal)
@@ -25,7 +59,22 @@ class SettingMenuViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
-        
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        fetchUser()
+    }
+    
+    // MARK: Firebase API
+    
+    func fetchUser(){
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        Service.fetchCurrentUser(withUid: uid) { user in
+            self.user = user
+            self.emailLabel.text = "이메일 : \(user.email)"
+            self.nameLabel.text = "이름 : \(user.name)"
+            self.nicknameLabel.text = "별명 : \(user.nickname)"
+        }
     }
     
     //MARK: Configures and Helpers
@@ -56,11 +105,16 @@ class SettingMenuViewController: UIViewController {
         view.backgroundColor = .white
         configurNavigationBar()
         
+        let stack = UIStackView(arrangedSubviews: [emailLabel, nameLabel, nicknameLabel])
+        stack.axis = .vertical
+        stack.spacing = 16
+        
+        view.addSubview(stack)
+        stack.anchor(top: view.safeAreaLayoutGuide.topAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 32, paddingLeft: 32, paddingRight: 32)
+        
         view.addSubview(logoutButton)
         logoutButton.centerX(inView: view)
-        logoutButton.anchor(top: view.safeAreaLayoutGuide.topAnchor,
-                            left: view.leftAnchor, right: view.rightAnchor,
-                            paddingTop: 10, paddingLeft: 32, paddingRight: 32)
+        logoutButton.anchor(top: stack.bottomAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 32, paddingLeft: 32, paddingRight: 32)
         
     }
     

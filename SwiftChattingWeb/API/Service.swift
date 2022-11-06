@@ -5,18 +5,24 @@ struct Service {
     
     static func fetchUsers(completion: @escaping([User]) -> Void){
         var users = [User]()
-        COLLECTION_USERS.getDocuments { snapshot, error in
+        
+        let query = COLLECTION_USERS.order(by: "email")
+        
+        let currentUser = Auth.auth().currentUser
+        
+        query.getDocuments { snapshot, error in
             snapshot?.documents.forEach({document in
-                
                 let dictionary = document.data()
                 let user = User(dictionary: dictionary)
-                users.append(user)
-                completion(users)
+                if user.uid != currentUser?.uid {
+                    users.append(user)
+                    completion(users)
+                }
             })
         }
     }
     
-    static func fetchUser(withUid uid: String, completion: @escaping(User) -> Void) {
+    static func fetchCurrentUser(withUid uid: String, completion: @escaping(User) -> Void) {
             
         COLLECTION_USERS.document(uid).getDocument { (snapshot, error) in
             if let error = error {
@@ -28,34 +34,12 @@ struct Service {
             completion(user)
         }
     }
-    
-    static func fetchConversation(completion: @escaping([Conversation]) -> Void) {
-        var conversations = [Conversation]()
+  
         
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        
-        let query = COLLECTION_MESSAGES.document(uid).collection("recent-messages").order(by: "timestamp")
-                        
-        query.addSnapshotListener{ (snapshot, error) in
-                snapshot?.documentChanges.forEach({ change in
-                let dictionary = change.document.data()
-                let message = Message(dictionary: dictionary)
-                    
-                self.fetchUser(withUid: message.toID) { user in
-                    let conversation = Conversation(user: user, message: message)
-                    conversations.append(conversation)
-                    completion(conversations)
-                }
-            })
-        }
-    }
-    
-    static func fetchMessages(forUser user: User, completion: @escaping(([Message]) -> Void)){
+    static func fetchMessages(roomID: String, completion: @escaping(([Message]) -> Void)){
         var messages = [Message]()
         
-        guard let crrentUid = Auth.auth().currentUser?.uid else { return}
-        
-        let query = COLLECTION_MESSAGES.document(crrentUid).collection(user.uid).order(by: "timestamp")
+        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: roomID).order(by: "timestamp")
         
         query.addSnapshotListener{(snapshot, error) in
             if let error = error {
@@ -73,20 +57,75 @@ struct Service {
         
     }
     
-    static func uploadMessage(_ message: String, to user: User, completion:((Error?) -> Void)?){
-        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+    static func fetchRooms(completion: @escaping([Room]) -> Void) {
         
-        let data = ["text": message,
-                    "fromID": currentUid,
-                    "toID": user.uid,
+        print("Fetch Rooms 시작")
+        
+        var rooms = [Room]()
+        
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        
+        let query = COLLECTION_ROOMS.whereField("members", arrayContains: uid).order(by: "timestamp")
+        
+        query.getDocuments{ (snapshot, error) in
+            if let error = error {
+                print("Error getting documents: \(error)")
+            }
+            snapshot?.documents.forEach ({ document in
+                let dictionary = document.data()
+                let room = Room(dictionary:  dictionary)
+                rooms.append(room)
+                completion(rooms)
+                print("Rooms is Fetched 패치된 룸 값: \(rooms)")
+            })
+        }
+    }
+    
+    static func uploadRooms(currentUser: (User), members checkedUsers: [String], membersName: [String], membersNickName:[String],  completion: @escaping((Room) -> Void)){
+        print("uploadRooms 시작")
+        let id = COLLECTION_ROOMS.document().documentID
+
+        let data = ["id": id,
+                    "members": checkedUsers,
+                    "createdBy": currentUser.uid,
+                    "membersName" : membersName,
+                    "membersNickname" : membersNickName,
                     "timestamp": Timestamp(date: Date())] as [String : Any]
         
-        COLLECTION_MESSAGES.document(currentUid).collection(user.uid).addDocument(data: data) { _ in
-            COLLECTION_MESSAGES.document(user.uid).collection(currentUid).addDocument(data: data, completion: completion)
-            
-            COLLECTION_MESSAGES.document(currentUid).collection("recent-messages").document(user.uid).setData(data)
-            
-            COLLECTION_MESSAGES.document(user.uid).collection("recent-messages").document(currentUid ).setData(data)
-        }
+        COLLECTION_ROOMS.document(id).setData(data)
+        
+        let room = Room(dictionary: data)
+        completion(room)
+
+        print("uploadRooms 완료 채팅방 정보 : \(data)")
+    }
+    
+    static func uploadMessage(roomID: String, message: String, user: User, completion:((Error?) -> Void)?){
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+        
+        let data = ["roomID" : roomID,
+                    "text": message,
+                    "fromID": currentUid,
+                    "userName": user.name,
+                    "userNickname": user.nickname,
+                    "timestamp": Timestamp(date: Date())] as [String : Any]
+        
+        COLLECTION_MESSAGES.addDocument(data: data)
+    }
+    
+    static func readCheckedUserInfo(userDictionary user: (User) , completion:([String], [String]) -> Void) {
+        
+        var membersName: [String] = []
+        var membersNickname: [String] = []
+        
+        var readUser = user
+        
+        membersName.append(readUser.name)
+        membersNickname.append(readUser.nickname)
+        print("추가된 멤버 이름 : \(membersName)")
+        print("추가된 멤버 닉네임 : \(membersNickname)")
+        completion(membersName, membersNickname)
+        print("completed [String] 유저이름 : \(membersName), 유저닉네임 : \(membersNickname)")
+
     }
 }

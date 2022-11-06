@@ -1,26 +1,34 @@
 
 import UIKit
+import Firebase
 
 private let reuseIdentifier = "UserCell"
 
 protocol NewChattingControllerDelegate: class {
-    func controller(_ controller: NewChattingController, wantToStartChatWith user: User)
+    func controller(_ controller: NewChattingController, wantGoRoom room: Room, fromCurrentUser currentUser: User)
 }
 
 class NewChattingController: UITableViewController {
     
     //MARK: Properties
-    
+    var rooms = [Room]()
     private var users = [User]()
+    private var currentUser: User!
+    private var indexPaths: [IndexPath] = []
     weak var delegate: NewChattingControllerDelegate?
+    
+    
         
     //MARK: View Lifecycle
     
     override func viewDidLoad() {
         super.viewDidLoad()
+                
         configureUI()
+        fetchCurrentUser()
         fetchUsers()
     }
+
     
     //MARK: Selectors
     
@@ -28,6 +36,18 @@ class NewChattingController: UITableViewController {
         dismiss(animated: true, completion: nil)
     }
     
+    @objc func handleConfirm() {
+        
+        if checkRoomExist() {
+            let alert = UIAlertController(title: "알림", message: "이미 생성된 채팅방 입니다", preferredStyle: UIAlertController.Style.alert)
+            let okAction = UIAlertAction(title: "확인", style: .default) { (action) in }
+            alert.addAction(okAction)
+            self.present(alert, animated: false, completion: nil)
+        } else {
+            uploadRooms()
+        }
+    }
+        
     //MARK: Firebase API
     
     func fetchUsers() {
@@ -37,16 +57,41 @@ class NewChattingController: UITableViewController {
         }
     }
     
+    func uploadRooms() {
+        
+        let readCheckedUserInfo = readCheckedUserInfo()
+        let membersName = readCheckedUserInfo.0
+        let membersNickName = readCheckedUserInfo.1
+        let checkedUsers = checkedUsers()
+        let currentUser = currentUser
+        
+        Service.uploadRooms(currentUser: currentUser!, members: checkedUsers, membersName: membersName, membersNickName: membersNickName) { room in
+            self.delegate?.controller(self, wantGoRoom: room, fromCurrentUser: self.currentUser)
+        }
+    }
+        
+    func fetchCurrentUser() {
+        guard let uid = Auth.auth().currentUser?.uid else { return  }
+        Service.fetchCurrentUser(withUid: uid) { user in
+            self.currentUser = user
+        }
+    }
+    
     //MARK: Configures and Helpers
     
     func configureUI() {
         configurNavigationBar()
         
-        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(handleDismiss))
+        navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .done, target: self, action: #selector(handleConfirm))
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(handleDismiss))
         
         tableView.tableFooterView = UIView()
         tableView.register(UserCell.self, forCellReuseIdentifier: reuseIdentifier)
         tableView.rowHeight = 80
+        tableView.allowsMultipleSelection = true
+        
+        updatedSelectedCell()
     }
     
     func configurNavigationBar() {
@@ -66,6 +111,66 @@ class NewChattingController: UITableViewController {
         
         navigationController?.navigationBar.overrideUserInterfaceStyle = .dark
     }
+    
+    func checkRoomExist() -> Bool {
+        
+        var isExist: Bool = false
+        
+        let rooms = self.rooms
+        for membersFromRooms in rooms {
+            var members = membersFromRooms
+            var checkedUsers = checkedUsers()
+            
+            members.members.sort()
+            checkedUsers.sort()
+            
+            if members.members == checkedUsers {
+                isExist = true
+                print("중복된 방이 있습니다")
+            }
+        }
+        
+        return isExist
+    }
+    
+    func checkedUsers() -> [String] {
+        var start:Int = 0
+        let end:Int = self.indexPaths.count
+        var checkedUsers: [String] = []
+        
+        guard let currentUser = Auth.auth().currentUser?.uid else { return [] }
+        
+        while start < end {
+            checkedUsers.append(self.users[self.indexPaths[start].row].uid)
+            start += 1
+        }
+        
+        checkedUsers.append(currentUser)
+        print("선택된 유저 불러오기 완료 | 선택된 유저 : \(checkedUsers)")
+        return checkedUsers
+    }
+    
+    func readCheckedUserInfo() -> ([String], [String]){
+        
+        let checkedUser = checkedUsers()
+        let indexPaths = self.indexPaths
+        let currentUser = self.currentUser
+        
+        var membersName:[String] = []
+        var membersNickName:[String] = []
+        
+       
+        
+        for indexPath in indexPaths {
+            membersName.append(self.users[indexPath.row].name)
+            membersNickName.append(self.users[indexPath.row].nickname)
+        }
+        
+        membersName.append(currentUser!.name)
+        membersNickName.append(currentUser!.nickname)
+        
+        return (membersName, membersNickName)
+    }
 }
 
 extension NewChattingController {
@@ -76,13 +181,27 @@ extension NewChattingController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! UserCell
         cell.user = users[indexPath.row]
+        cell.selectionStyle = .none
         return cell
     }
 }
 
 extension NewChattingController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("새로운 채팅방 Cell Tapped is \(indexPath.row)")
-        delegate?.controller(self, wantToStartChatWith: users[indexPath.row])
+//        print("새로운 채팅방 Cell Tapped is \(indexPath.row)")
+        updatedSelectedCell()
+//        delegate?.controller(self, wantToStartChatWith: users[indexPath.row], fromCurrentUser: currentUser)
+    }
+    
+    override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+        updatedSelectedCell()
+    }
+    
+    func updatedSelectedCell() {
+        indexPaths = tableView.indexPathsForSelectedRows ?? []
+        if indexPaths == [] { navigationItem.rightBarButtonItem?.isEnabled = false } else { navigationItem.rightBarButtonItem?.isEnabled = true }
     }
 }
+
+
+

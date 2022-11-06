@@ -1,5 +1,6 @@
 
 import UIKit
+import Firebase
 
 private let reuseIdentifier = "MessageCell"
 
@@ -7,7 +8,8 @@ class ChatController: UICollectionViewController {
     
     // MARK: Properties
     
-    private let user: User
+    private let room: Room
+    private let currentUser: User
     private var messages = [Message]()
     var fromCurrentUser = false
     
@@ -19,9 +21,10 @@ class ChatController: UICollectionViewController {
     }()
     
     // MARK: View Lifecycle
-    
-    init(user: User) {
-        self.user = user
+
+    init(room: Room, currentUser: User) {
+        self.room = room
+        self.currentUser = currentUser
         super.init(collectionViewLayout: UICollectionViewFlowLayout())
     }
     
@@ -34,7 +37,7 @@ class ChatController: UICollectionViewController {
         navigationController?.navigationBar.isHidden = false
         navigationItem.largeTitleDisplayMode = .never
         
-        print("현재 채팅방 유저는 \(user.name)")
+//        print("전달받은 데이터값 | 채팅방 정보 : \(self.room) | 현재 유저 정보 : \(self.currentUser)")
         
         configureUI()
         fechMessages()
@@ -51,12 +54,14 @@ class ChatController: UICollectionViewController {
     // MARK: Firebase API
     
     func fechMessages() {
-        Service.fetchMessages(forUser: user) { messages in
+        Service.fetchMessages(roomID: room.id!) { messages in
             self.messages = messages
             self.collectionView.reloadData()
             self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
         }
     }
+    
+    
     
     // MARK: Configures and Helpers
     
@@ -80,7 +85,7 @@ class ChatController: UICollectionViewController {
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
         
         navigationController?.navigationBar.prefersLargeTitles = false
-        navigationItem.title = user.nickname
+        navigationItem.title = room.membersName.joined(separator: ", ")
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.isTranslucent = true
         
@@ -106,7 +111,7 @@ extension ChatController: UICollectionViewDelegateFlowLayout{
     }
     
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
-        let frame = CGRect(x: 0 , y:0, width: view.frame.width, height: 50)
+        let frame = CGRect(x: 0 , y:0, width: view.frame.width, height: 80)
         let estimatedSizeCell = MessageCell(frame: frame)
         estimatedSizeCell.message = messages[indexPath.row]
         estimatedSizeCell.layoutIfNeeded()
@@ -121,13 +126,13 @@ extension ChatController: UICollectionViewDelegateFlowLayout{
 extension ChatController: CustomInputAccessoryViewDelegate {
     func inputView(_ inputView: CustomInputAccessoryView, wantsToSend message: String) {
         
-        Service.uploadMessage(message, to: user) { error in
+        Service.uploadMessage(roomID: room.id!, message: message, user: currentUser) { error in
             if let error = error{
                 print("DEBUG: Failed to upload message with error \(error.localizedDescription)")
                 return
             }
         }
         inputView.messageInputTextView.text = nil
-        print("DEBUG: Send a message suceesfully")
+        print("메세지 업로드 성공")
     }
 }

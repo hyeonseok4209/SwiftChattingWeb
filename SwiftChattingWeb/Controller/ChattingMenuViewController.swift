@@ -1,5 +1,6 @@
 
 import UIKit
+import Firebase
 
 
 private let reuseIdentifier = "ChatCell"
@@ -9,7 +10,8 @@ class ChattingMenuViewController: UIViewController {
     //MARK: Properties
     
     private let tableView = UITableView()
-    private var conversations = [Conversation]()
+    private var rooms = [Room]()
+    private var user: User!
     
     private var containerView: UIView = {
         let view = UIView()
@@ -28,16 +30,34 @@ class ChattingMenuViewController: UIViewController {
         return button
     }()
     
+    private let titleLabel: UILabel = {
+        let label = UILabel()
+        
+        label.font = UIFont.systemFont(ofSize: 24)
+        label.textColor = .systemBlue
+        
+        return label
+    }()
+    
+    private let emailLabel: UILabel = {
+        let label = UILabel()
+        label.font = UIFont.boldSystemFont(ofSize: 18)
+        
+        return label
+    }()
+    
     //MARK: View Lifecylce
     
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
-        fetchConversations()
     }
+
     
     override func viewWillAppear(_ animated: Bool) {
         navigationController?.navigationBar.isHidden = true
+        fetchUser()
+        fetchRooms()
     }
     
     //MARK: Seletors
@@ -45,19 +65,33 @@ class ChattingMenuViewController: UIViewController {
     @objc func showNewChatting(){
         let controller = NewChattingController()
         controller.delegate = self
+        controller.rooms = rooms
+     
         let nav = UINavigationController(rootViewController: controller)
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true, completion: nil)
     }
     
     //MARK: Firebase API
-    
-    func fetchConversations() {
-        Service.fetchConversation { conversations in
-            self.conversations = conversations
+        
+    func fetchRooms() {
+        Service.fetchRooms { readRooms in
+            self.rooms = readRooms
+            print("checkRoomExist 패치된 채팅방 : \(self.rooms) \n checkRoomExist 채팅방 불러오기 완료")
             self.tableView.reloadData()
         }
-    } 
+    }
+    
+    func fetchUser(){
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+                
+        Service.fetchCurrentUser(withUid: uid) { user in
+            self.user = user
+            self.titleLabel.text = "\(user.name)(\(user.nickname))"
+            print("현재 접속 유저 \(user.name) | \(user.nickname) | \(user.email) ")
+            self.emailLabel.text = user.email
+        }
+    }
         
     //MARK: Configures and Helpers
     
@@ -65,21 +99,27 @@ class ChattingMenuViewController: UIViewController {
     func configureUI() {
         view.backgroundColor = .white
         
-        let stack = UIStackView(arrangedSubviews: [newChattingButton])
-        stack.axis = .horizontal
-        stack.spacing = 16
-        stack.backgroundColor = .white
+        let vStack = UIStackView(arrangedSubviews: [titleLabel, emailLabel])
+        vStack.axis = .vertical
+        vStack.spacing = 0
+        vStack.distribution = .fill
+        view.addSubview(vStack)
         
-        view.addSubview(stack)
-        stack.setHeight(height: 80)
-        stack.anchor(top: view.topAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 50)
+        let hStack = UIStackView(arrangedSubviews: [vStack, newChattingButton])
+        hStack.axis = .horizontal
+        hStack.spacing = 16
+        hStack.backgroundColor = .white
+        
+        view.addSubview(hStack)
+        hStack.setHeight(height: 80)
+        hStack.anchor(top: view.topAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 50, paddingLeft: 40, paddingRight: 40)
+        hStack.distribution = .equalSpacing
         
         view.addSubview(containerView)
-        containerView.anchor(top: stack.bottomAnchor, left: view.leftAnchor,
+        containerView.anchor(top: hStack.bottomAnchor, left: view.leftAnchor,
                              bottom: view.safeAreaLayoutGuide.bottomAnchor,
                              right: view.rightAnchor, paddingTop: 10)
-        newChattingButton.anchor(left: stack.leftAnchor ,paddingLeft: 300)
-                
+        
         configureTableView()
         
     }
@@ -119,12 +159,12 @@ class ChattingMenuViewController: UIViewController {
 
 extension ChattingMenuViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return conversations.count
+        return rooms.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath)
-        cell.textLabel?.text = conversations[indexPath.row].message.text
+        cell.textLabel?.text = rooms[indexPath.row].membersName.joined(separator: ", ")
         cell.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
         return cell
     }
@@ -132,7 +172,9 @@ extension ChattingMenuViewController: UITableViewDataSource {
 
 extension ChattingMenuViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        print("Taped \(indexPath.row)")
+        let room = rooms[indexPath.row]
+        let chat = ChatController(room: room, currentUser: user)
+        navigationController?.pushViewController(chat, animated: true)
     }
     
 }
@@ -140,10 +182,10 @@ extension ChattingMenuViewController: UITableViewDelegate {
 // MARK: NewChattingControllerDelegate
 
 extension ChattingMenuViewController: NewChattingControllerDelegate {
-    func controller(_ controller: NewChattingController, wantToStartChatWith user: User) {
-        
+    func controller(_ controller: NewChattingController, wantGoRoom room: Room, fromCurrentUser currentUser: User) {
+
         controller.dismiss(animated: true, completion: nil)
-        let chat = ChatController(user: user)
+        let chat = ChatController(room: room, currentUser: currentUser)
         navigationController?.pushViewController(chat, animated: true)
     }
 }

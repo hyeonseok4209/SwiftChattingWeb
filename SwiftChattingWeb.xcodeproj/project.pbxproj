@@ -34,6 +34,7 @@
 		C9B3D03D290A332B00F5D9E6 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D03C290A332B00F5D9E6 /* Message.swift */; };
 		C9B3D03F290A366700F5D9E6 /* MessageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D03E290A366700F5D9E6 /* MessageViewModel.swift */; };
 		C9B3D041290A3E5900F5D9E6 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D040290A3E5900F5D9E6 /* Constants.swift */; };
+		C9FCFEAC290FCB09005CACEB /* Room.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9FCFEAB290FCB09005CACEB /* Room.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +69,7 @@
 		C9B3D03C290A332B00F5D9E6 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		C9B3D03E290A366700F5D9E6 /* MessageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageViewModel.swift; sourceTree = "<group>"; };
 		C9B3D040290A3E5900F5D9E6 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		C9FCFEAB290FCB09005CACEB /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +197,7 @@
 			children = (
 				C9B3D0322909989300F5D9E6 /* User.swift */,
 				C9B3D03C290A332B00F5D9E6 /* Message.swift */,
+				C9FCFEAB290FCB09005CACEB /* Room.swift */,
 			);
 			path = Model;
 			sourceTree = "<group>";
@@ -327,6 +330,7 @@
 				C9B3D02329090B9500F5D9E6 /* ChattingMenuViewController.swift in Sources */,
 				C9B3D0332909989300F5D9E6 /* User.swift in Sources */,
 				C9B3D0352909990200F5D9E6 /* Service.swift in Sources */,
+				C9FCFEAC290FCB09005CACEB /* Room.swift in Sources */,
 				C9B3D03B290A1EA800F5D9E6 /* MessageCell.swift in Sources */,
 				C9B3D0212909042F00F5D9E6 /* LoginViewModel.swift in Sources */,
 				C9B3D0272909200100F5D9E6 /* SettingMenuViewController.swift in Sources */,

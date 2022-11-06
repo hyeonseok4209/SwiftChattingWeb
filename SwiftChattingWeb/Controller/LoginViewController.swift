@@ -99,13 +99,16 @@ class LoginViewController: UIViewController {
         guard let email = emailTextField.text else { return }
         guard let password = passwordTextField.text else { return }
         
+        //파이베이스 이메일 로그인 클로저
         AuthService.shared.logUserIn(withEmail: email, password: password) { result, error in
+            
+            //로그인 에러 디버그
             if let error = error {
                 print("DEBUG: Failed to login with error \(error.localizedDescription)")
                 return
             }
+            self.dismiss(animated: true, completion: nil)
         }
-        self.dismiss(animated: true, completion: nil)
     }
     
     //MARK: Configures and Helpers

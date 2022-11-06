@@ -9,6 +9,20 @@ class UserCell: UITableViewCell {
         didSet { configure() }
     }
     
+    private var checkBoxButton: UIButton = {
+        var button = UIButton()
+        
+        return button
+    }()
+    
+    var isCheck: Bool = false {
+        didSet {
+            let imageName = isCheck ? "checkmark.square" : "checkmark.square.fill"
+            checkBoxButton.setImage(UIImage(systemName: imageName), for: .normal)
+        }
+        
+    }
+    
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         
@@ -22,15 +36,15 @@ class UserCell: UITableViewCell {
     
     private let nicknameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.boldSystemFont(ofSize: 18)
+        label.font = UIFont.systemFont(ofSize: 16)
+        label.textColor = .lightGray
        
         return label
     }()
     
     private let nameLabel: UILabel = {
         let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 16)
-        label.textColor = .lightGray
+        label.font = UIFont.boldSystemFont(ofSize: 18)
         
         return label
     }()
@@ -44,11 +58,16 @@ class UserCell: UITableViewCell {
         profileImageView.setDimensions(height: 55, width: 55)
         profileImageView.layer.cornerRadius = 15
         
-        addSubview(nicknameLabel)
-        nicknameLabel.centerY(inView: self, leftAnchor: profileImageView.rightAnchor, paddingLeft: 12)
-        
         addSubview(nameLabel)
-        nameLabel.centerY(inView: self, leftAnchor: nicknameLabel.rightAnchor, paddingLeft: 5)
+        nameLabel.centerY(inView: self, leftAnchor: profileImageView.rightAnchor, paddingLeft: 12)
+        
+        addSubview(nicknameLabel)
+        nicknameLabel.centerY(inView: self, leftAnchor: nameLabel.rightAnchor, paddingLeft: 5)
+        
+        addSubview(checkBoxButton)
+        checkBoxButton.centerY(inView: self)
+        checkBoxButton.anchor(right: rightAnchor, paddingRight: 10)
+        checkBoxButton.setDimensions(height: 20, width: 20)
     }
     
     required init?(coder: NSCoder) {
@@ -60,6 +79,11 @@ class UserCell: UITableViewCell {
     func configure() {
         guard let user = user else { return }
         nicknameLabel.text = user.nickname
-        nameLabel.text = "(\(user.name))"
+        nameLabel.text = user.name
+    }
+    
+    override func setSelected(_ selected: Bool, animated: Bool) {
+        super.setSelected(selected, animated: animated)
+        isCheck.toggle()
     }
 }
