@@ -60,7 +60,7 @@ class ChattingMenuViewController: UIViewController {
         fetchRooms()
     }
     
-    //MARK: Seletors
+    //MARK: Selectors
     
     @objc func showNewChatting(){
         let controller = NewChattingController()
@@ -109,10 +109,10 @@ class ChattingMenuViewController: UIViewController {
         hStack.axis = .horizontal
         hStack.spacing = 16
         hStack.backgroundColor = .white
-        
         view.addSubview(hStack)
-        hStack.setHeight(height: 80)
-        hStack.anchor(top: view.topAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 50, paddingLeft: 40, paddingRight: 40)
+        
+//        hStack.setHeight(height: 80)
+        hStack.anchor(top: view.safeAreaLayoutGuide.topAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 10, paddingLeft: 40, paddingRight: 40)
         hStack.distribution = .equalSpacing
         
         view.addSubview(containerView)
@@ -127,8 +127,8 @@ class ChattingMenuViewController: UIViewController {
 
     func configureTableView() {
         tableView.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
-        tableView.rowHeight = 80
-        tableView.register(UITableViewCell.self, forCellReuseIdentifier: reuseIdentifier)
+        tableView.rowHeight = 85
+        tableView.register(ChatCell.self, forCellReuseIdentifier: reuseIdentifier)
         tableView.tableFooterView = UIView()
         tableView.delegate = self
         tableView.dataSource = self
@@ -163,18 +163,27 @@ extension ChattingMenuViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
-        let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath)
-        cell.textLabel?.text = rooms[indexPath.row].membersName.joined(separator: ", ")
+        let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! ChatCell
+//        cell.textLabel?.text = rooms[indexPath.row].membersName.joined(separator: ", ")
         cell.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
+        cell.room = rooms[indexPath.row]
+
         return cell
     }
 }
 
 extension ChattingMenuViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        let room = rooms[indexPath.row]
+//        let chat = ChatController(room: room, currentUser: user)
+//
+//        navigationController?.pushViewController(chat, animated: true)
         let room = rooms[indexPath.row]
-        let chat = ChatController(room: room, currentUser: user)
-        navigationController?.pushViewController(chat, animated: true)
+        let controller = ChatController(room: room, currentUser: user)
+     
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true, completion: nil)
     }
     
 }
@@ -183,9 +192,23 @@ extension ChattingMenuViewController: UITableViewDelegate {
 
 extension ChattingMenuViewController: NewChattingControllerDelegate {
     func controller(_ controller: NewChattingController, wantGoRoom room: Room, fromCurrentUser currentUser: User) {
+        
+//        let room = rooms[indexPath.row]
+//        let controller = ChatController(room: room, currentUser: user)
+//
+//        let nav = UINavigationController(rootViewController: controller)
+//        nav.modalPresentationStyle = .fullScreen
+//        present(nav, animated: true, completion: nil)
 
         controller.dismiss(animated: true, completion: nil)
-        let chat = ChatController(room: room, currentUser: currentUser)
-        navigationController?.pushViewController(chat, animated: true)
+        
+//        let chat = ChatController(room: room, currentUser: currentUser)
+//        navigationController?.pushViewController(chat, animated: true)
+        
+//        let chat = ChatController(room: room, currentUser: currentUser)
+        let controller = ChatController(room: room, currentUser: user)
+        let nav = UINavigationController(rootViewController: controller)
+                nav.modalPresentationStyle = .fullScreen
+                present(nav, animated: true, completion: nil)
     }
 }

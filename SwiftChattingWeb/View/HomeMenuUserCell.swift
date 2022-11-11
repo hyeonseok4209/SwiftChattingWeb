@@ -1,26 +1,12 @@
 
 import UIKit
 
-class UserCell: UITableViewCell {
+class HomeMenuUserCell: UITableViewCell {
     
     //MARK: Properties
         
     var user: User? {
         didSet { configure() }
-    }
-    
-    private var checkBoxButton: UIButton = {
-        var button = UIButton()
-        
-        return button
-    }()
-    
-    var isCheck: Bool = false {
-        didSet {
-            let imageName = isCheck ? "checkmark.square" : "checkmark.square.fill"
-            checkBoxButton.setImage(UIImage(systemName: imageName), for: .normal)
-        }
-        
     }
     
     private let profileImageView: UIImageView = {
@@ -49,6 +35,15 @@ class UserCell: UITableViewCell {
         return label
     }()
     
+    private var newChatButton: UIButton = {
+        var button = UIButton()
+        button.setImage(UIImage(systemName: "bubble.left.circle.fill"), for: .normal)
+        button.tintColor = .systemBlue
+        button.imageView?.setDimensions(height: 40, width: 40)
+        
+        return button
+    }()
+    
     //MARK: View LifeCycle
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -64,10 +59,10 @@ class UserCell: UITableViewCell {
         addSubview(nicknameLabel)
         nicknameLabel.centerY(inView: self, leftAnchor: nameLabel.rightAnchor, paddingLeft: 5)
         
-        addSubview(checkBoxButton)
-        checkBoxButton.centerY(inView: self)
-        checkBoxButton.anchor(right: rightAnchor, paddingRight: 10)
-        checkBoxButton.setDimensions(height: 20, width: 20)
+        addSubview(newChatButton)
+        newChatButton.centerY(inView: self)
+        newChatButton.anchor(right: rightAnchor, paddingRight: 12)
+        
     }
     
     required init?(coder: NSCoder) {
@@ -80,10 +75,5 @@ class UserCell: UITableViewCell {
         guard let user = user else { return }
         nicknameLabel.text = user.nickname
         nameLabel.text = user.name
-    }
-    
-    override func setSelected(_ selected: Bool, animated: Bool) {
-        super.setSelected(selected, animated: animated)
-        isCheck.toggle()
     }
 }

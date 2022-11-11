@@ -765,6 +765,7 @@ PODS:
   - gRPC-Core/Interface (1.44.0)
   - GTMSessionFetcher/Core (2.1.0)
   - JGProgressHUD (2.0.4)
+  - Kingfisher (7.4.1)
   - leveldb-library (1.22.1)
   - Libuv-gRPC (0.0.10):
     - Libuv-gRPC/Implementation (= 0.0.10)
@@ -778,9 +779,9 @@ PODS:
   - nanopb/decode (2.30909.0)
   - nanopb/encode (2.30909.0)
   - PromisesObjC (2.1.1)
-  - SDWebImage (4.4.8):
-    - SDWebImage/Core (= 4.4.8)
-  - SDWebImage/Core (4.4.8)
+  - SDWebImage (5.13.5):
+    - SDWebImage/Core (= 5.13.5)
+  - SDWebImage/Core (5.13.5)
 
 DEPENDENCIES:
   - Firebase/Auth
@@ -788,7 +789,8 @@ DEPENDENCIES:
   - Firebase/Firestore
   - Firebase/Storage
   - JGProgressHUD (~> 2.0.3)
-  - SDWebImage (~> 4.4.2)
+  - Kingfisher
+  - SDWebImage
 
 SPEC REPOS:
   trunk:
@@ -811,6 +813,7 @@ SPEC REPOS:
     - gRPC-Core
     - GTMSessionFetcher
     - JGProgressHUD
+    - Kingfisher
     - leveldb-library
     - Libuv-gRPC
     - nanopb
@@ -837,12 +840,13 @@ SPEC CHECKSUMS:
   gRPC-Core: 943e491cb0d45598b0b0eb9e910c88080369290b
   GTMSessionFetcher: ffbb25ec00ebcb5201adab0a56d808f6f1902d9f
   JGProgressHUD: 62658b14e72cccf179efc7a13bcb54d30b92fc22
+  Kingfisher: cd762a593a61b2fbecf7645c00f9a801a3ebfc9c
   leveldb-library: 50c7b45cbd7bf543c81a468fe557a16ae3db8729
   Libuv-gRPC: 55e51798e14ef436ad9bc45d12d43b77b49df378
   nanopb: b552cce312b6c8484180ef47159bc0f65a1f0431
   PromisesObjC: ab77feca74fa2823e7af4249b8326368e61014cb
-  SDWebImage: 783af2c3fa36291a250030c4752ee370a9a51d13
+  SDWebImage: 23d714cd599354ee7906dbae26dff89b421c4370
 
-PODFILE CHECKSUM: 4c96ab5ebb21ca82d898980137ccb5adcd0b17ed
+PODFILE CHECKSUM: 65ab9a912a2dea5a2ebcd95db0c15151c144696d
 
 COCOAPODS: 1.11.3

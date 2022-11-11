@@ -38,14 +38,8 @@ class NewChattingController: UITableViewController {
     
     @objc func handleConfirm() {
         
-        if checkRoomExist() {
-            let alert = UIAlertController(title: "알림", message: "이미 생성된 채팅방 입니다", preferredStyle: UIAlertController.Style.alert)
-            let okAction = UIAlertAction(title: "확인", style: .default) { (action) in }
-            alert.addAction(okAction)
-            self.present(alert, animated: false, completion: nil)
-        } else {
-            uploadRooms()
-        }
+        checkRoomExist()
+
     }
         
     //MARK: Firebase API
@@ -112,7 +106,7 @@ class NewChattingController: UITableViewController {
         navigationController?.navigationBar.overrideUserInterfaceStyle = .dark
     }
     
-    func checkRoomExist() -> Bool {
+    func checkRoomExist() {
         
         var isExist: Bool = false
         
@@ -125,12 +119,14 @@ class NewChattingController: UITableViewController {
             checkedUsers.sort()
             
             if members.members == checkedUsers {
+                
                 isExist = true
-                print("중복된 방이 있습니다")
+                
+                print("중복된 방이 있습니다, RoomId: \(members.id)")
+                self.delegate?.controller(self, wantGoRoom: members, fromCurrentUser: self.currentUser)
             }
         }
-        
-        return isExist
+        if !isExist { uploadRooms() }
     }
     
     func checkedUsers() -> [String] {

@@ -8,7 +8,7 @@ struct Room {
     var members: [String]
     let membersName: [String]
     let membersNickname: [String]
-//    let recentMessage: String
+    let recentMessage: String
     let timestamp: Timestamp
     
     init(dictionary: [String: Any]) {
@@ -17,7 +17,7 @@ struct Room {
         self.members = dictionary["members"] as? [String] ?? []
         self.membersName = dictionary["membersName"] as? [String] ?? []
         self.membersNickname = dictionary["membersNickname"] as? [String] ?? []
-//        self.recentMessage = dictionary["recentMessage"] as? String ?? ""
+        self.recentMessage = dictionary["recentMessage"] as? String ?? ""
         self.timestamp = dictionary["timestamp"] as? Timestamp ?? Timestamp(date: Date())
         
     }

@@ -5,21 +5,65 @@ struct Service {
     
     static func fetchUsers(completion: @escaping([User]) -> Void){
         var users = [User]()
-        
-        let query = COLLECTION_USERS.order(by: "email")
-        
+
         let currentUser = Auth.auth().currentUser
+        let uid = Auth.auth().currentUser?.uid
+        let currentQuery = COLLECTION_USERS.document(uid!)
+        var friends: [String] = [] {
+            didSet {
+                for friend in friends {
+                    COLLECTION_USERS.document(friend).getDocument { snapshot, error in
+                        guard let dictionary = snapshot?.data() else { return }
+                        let user = User(dictionary: dictionary)
+                        if user.uid != currentUser?.uid {
+                            users.append(user)
+                            completion(users)
+                        }
+                    }
+                }
+            }
+        }
+                
+        currentQuery.getDocument { snapshot, error in
+            guard let dictionary = snapshot?.data() else { return }
+            let user = User(dictionary: dictionary)
+                        
+            friends = user.friends
+            print("유저패치값 : \(friends)")
+            
+        }
+
+    }
+    
+    static func addUser(textInput: String, completion: @escaping(((String,Bool)) -> Void)){
+        
+        var user:User = User(dictionary: ["": ""]) {
+            didSet{
+                print("친구추가 didSet : \(user.uid)")
+                completion((user.uid, false))
+            }
+        }
+                
+        let query = COLLECTION_USERS.whereField("email", isEqualTo: textInput)
         
         query.getDocuments { snapshot, error in
-            snapshot?.documents.forEach({document in
-                let dictionary = document.data()
-                let user = User(dictionary: dictionary)
-                if user.uid != currentUser?.uid {
-                    users.append(user)
-                    completion(users)
-                }
-            })
+            
+            if let error = error {
+                print("친구추가 에러 \(error.localizedDescription)")
+            }
+            
+            let checkUsers = snapshot?.documents.count
+            
+            if checkUsers == 0 {
+                completion(("", true))
+            } else {
+                snapshot?.documents.forEach ({ document in
+                    let dictionary = document.data()
+                    user = User(dictionary: dictionary)
+                })
+            }
         }
+        
     }
     
     static func fetchCurrentUser(withUid uid: String, completion: @escaping(User) -> Void) {
@@ -50,7 +94,6 @@ struct Service {
                     let dictionary = change.document.data()
                     messages.append(Message(dictionary: dictionary))
                     completion(messages)
-                    print("Fetch Message 성공")
                 }
             })
         }
@@ -90,6 +133,7 @@ struct Service {
                     "createdBy": currentUser.uid,
                     "membersName" : membersName,
                     "membersNickname" : membersNickName,
+                    "recentMessage" : "",
                     "timestamp": Timestamp(date: Date())] as [String : Any]
         
         COLLECTION_ROOMS.document(id).setData(data)
@@ -100,17 +144,56 @@ struct Service {
         print("uploadRooms 완료 채팅방 정보 : \(data)")
     }
     
-    static func uploadMessage(roomID: String, message: String, user: User, completion:((Error?) -> Void)?){
+    static func uploadMessage(roomID: String, message: String, user: User, unReadedMembers: [String],  completion:((Error?) -> Void)?){
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         
-        let data = ["roomID" : roomID,
+        let id = COLLECTION_MESSAGES.document().documentID
+        
+        let data = [
+                    "id": id,
+                    "roomID" : roomID,
                     "text": message,
                     "fromID": currentUid,
                     "userName": user.name,
                     "userNickname": user.nickname,
+                    "imageURL" : "",
+                    "unReadedMember" : unReadedMembers,
                     "timestamp": Timestamp(date: Date())] as [String : Any]
         
-        COLLECTION_MESSAGES.addDocument(data: data)
+        COLLECTION_MESSAGES.document(id).setData(data)
+    }
+    
+    static func uploadimageMessage(roomID: String, image: Data, message: String, user: User, completion:((Error?) -> Void)?){
+        guard let currentUid = Auth.auth().currentUser?.uid else { return }
+        
+        let id = COLLECTION_MESSAGES.document().documentID
+        
+        let ref = Storage.storage().reference(withPath: "/images/\(id)")
+        
+        ref.putData(image, metadata: nil) {(meta, error) in
+            ref.downloadURL { url, error in
+                
+                guard let imageURL = url?.absoluteString else { return }
+                
+                let data = ["id": id,
+                            "roomID" : roomID,
+                            "text": message,
+                            "fromID": currentUid,
+                            "userName": user.name,
+                            "userNickname": user.nickname,
+                            "imageURL": imageURL,
+                            "timestamp": Timestamp(date: Date())] as [String : Any]
+                COLLECTION_MESSAGES.document(id).setData(data)
+            }
+        }
+    }
+    
+    static func removeReadedMember(messageID: String, userUID: String, completion:((Error?) -> Void)?){
+        
+        COLLECTION_MESSAGES.document(messageID).updateData([
+            "unReadedMember" : FieldValue.arrayRemove([userUID])
+        ])
+        
     }
     
     static func readCheckedUserInfo(userDictionary user: (User) , completion:([String], [String]) -> Void) {

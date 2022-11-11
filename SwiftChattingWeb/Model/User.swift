@@ -6,6 +6,7 @@ struct User {
     let email: String
     let name: String
     let nickname: String
+    let friends : [String]
     
     init(dictionary: [String: Any]) {
         
@@ -13,6 +14,7 @@ struct User {
         self.email = dictionary["email"] as? String ?? ""
         self.name = dictionary["name"] as? String ?? ""
         self.nickname = dictionary["nickname"] as? String ?? ""
+        self.friends = dictionary["friends"] as? [String] ?? []
         
     }
     

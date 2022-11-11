@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Bucket
-   uuid = "1403F2E7-66BB-404E-9408-986CDE3BDD40"
+   uuid = "D70C5FCB-7D8F-4930-8731-AEC8040EE756"
    type = "0"
    version = "2.0">
    <Breakpoints>
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "6B3707B5-0838-4AAF-9C16-5E6CF90F1E32"
-            shouldBeEnabled = "Yes"
+            uuid = "DCB0AF1B-6930-4C6F-A1F2-309EAB1DD618"
+            shouldBeEnabled = "No"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "SwiftChattingWeb/View/CustomNavigationBar.swift"
+            filePath = "SwiftChattingWeb/Controller/ChatController.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "4"
-            endingLineNumber = "4"
-            landmarkName = "CustomNavigationBar"
-            landmarkType = "3">
+            startingLineNumber = "184"
+            endingLineNumber = "184"
+            landmarkName = "inputView(_:wantsToSend:)"
+            landmarkType = "7">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

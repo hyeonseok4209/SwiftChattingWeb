@@ -6,7 +6,15 @@ class TabBarViewController: UITabBarController {
     
     //MARK: Properties
     
-    let ChattingMenuView: UIViewController = {
+    let mainMenuView: UIViewController = {
+        let controller = UINavigationController (rootViewController: MainViewController())
+        controller.tabBarItem.title = "Home"
+        controller.tabBarItem.image = UIImage(systemName: "house")
+        
+        return controller
+    }()
+    
+    let chattingMenuView: UIViewController = {
         let controller = UINavigationController(rootViewController: ChattingMenuViewController())
         controller.tabBarItem.title = "Message"
         controller.tabBarItem.image = UIImage(systemName: "message")
@@ -28,9 +36,15 @@ class TabBarViewController: UITabBarController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        configureUI()
         authenticateUser()
+        configureUI()
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        navigationController?.navigationBar.isHidden = true
+        
     }
     
     //MARK: Firebase Authenfication API
@@ -54,10 +68,11 @@ class TabBarViewController: UITabBarController {
     }
     
     func configureUI() {
+
         self.tabBar.backgroundColor = .white
         self.tabBar.tintColor = .systemBlue
         self.tabBar.unselectedItemTintColor = .lightGray
         
-        viewControllers = [ChattingMenuView, settingMenuView]
+        viewControllers = [mainMenuView,chattingMenuView, settingMenuView]
     }
 }
