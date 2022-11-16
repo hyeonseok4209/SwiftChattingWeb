@@ -5,8 +5,6 @@ import Firebase
 class SettingMenuViewController: UIViewController {
     //MARK: Properties
     
-    private var user: User?
-    
     private let profileImageView: UIImageView = {
         let imageView = UIImageView()
         
@@ -59,36 +57,52 @@ class SettingMenuViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         configureUI()
+        fetchCurrentUserInfo()
     }
     
     override func viewWillAppear(_ animated: Bool) {
-        fetchUser()
+        
     }
     
     // MARK: Firebase API
     
-    func fetchUser(){
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        Service.fetchCurrentUser(withUid: uid) { user in
-            self.user = user
-            self.emailLabel.text = "이메일 : \(user.email)"
-            self.nameLabel.text = "이름 : \(user.name)"
-            self.nicknameLabel.text = "별명 : \(user.nickname)"
-        }
+    func fetchCurrentUserInfo(){
+        
+        let currentUserInfo = CurrentUserInfo.shared
+        
+        guard let user = currentUserInfo.currentUserInfo else { return }
+        
+        self.emailLabel.text = "이메일 : \(user.email)"
+        self.nameLabel.text = "이름 : \(user.name)"
+        self.nicknameLabel.text = "별명 : \(user.nickname)"
+        
+//        guard let uid = Auth.auth().currentUser?.uid else { return }
+//        Service.fetchCurrentUser(withUid: uid) { user in
+//            self.user = user
+//            self.emailLabel.text = "이메일 : \(user.email)"
+//            self.nameLabel.text = "이름 : \(user.name)"
+//            self.nicknameLabel.text = "별명 : \(user.nickname)"
+//        }
     }
     
     //MARK: Configures and Helpers
     
     @objc func handleLogout() {
         logout()
+        self.tabBarController?.selectedIndex = 0
     }
     
     func logout(){
         do {
             try Auth.auth().signOut()
+            let currentUserInfo = CurrentUserInfo.shared
+            let usersInfo = UsersInfo.shared
+            currentUserInfo.currentUserInfo = nil
+            usersInfo.users = nil
+            
             presentLoginScreen()
         } catch {
-            print("DEBUG: Error signing out..")
+            print("[Error] 로그아웃 에러 : \(error.localizedDescription)")
         }
     }
     

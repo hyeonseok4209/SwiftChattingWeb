@@ -16,6 +16,9 @@
 		C937F9102907B0850082C477 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C937F90F2907B0850082C477 /* Assets.xcassets */; };
 		C937F9132907B0850082C477 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C937F9112907B0850082C477 /* LaunchScreen.storyboard */; };
 		C937F91B2907CCC90082C477 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = C937F91A2907CCC90082C477 /* GoogleService-Info.plist */; };
+		C966CA182923502400F0D0F9 /* SharedInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C966CA172923502400F0D0F9 /* SharedInfo.swift */; };
+		C999862D29249C6100F2C142 /* SideMenuViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C999862C29249C6100F2C142 /* SideMenuViewController.swift */; };
+		C999862F2924DAF200F2C142 /* SideMenuUserCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = C999862E2924DAF200F2C142 /* SideMenuUserCell.swift */; };
 		C9B3D0152907DDE400F5D9E6 /* LoginViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D0142907DDE400F5D9E6 /* LoginViewController.swift */; };
 		C9B3D0182908CF5400F5D9E6 /* Extentions.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D0172908CF5400F5D9E6 /* Extentions.swift */; };
 		C9B3D01C2908F60600F5D9E6 /* InputContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D01B2908F60600F5D9E6 /* InputContainerView.swift */; };
@@ -54,6 +57,9 @@
 		C937F9122907B0850082C477 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		C937F9142907B0850082C477 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C937F91A2907CCC90082C477 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		C966CA172923502400F0D0F9 /* SharedInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInfo.swift; sourceTree = "<group>"; };
+		C999862C29249C6100F2C142 /* SideMenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuViewController.swift; sourceTree = "<group>"; };
+		C999862E2924DAF200F2C142 /* SideMenuUserCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuUserCell.swift; sourceTree = "<group>"; };
 		C9B3D0142907DDE400F5D9E6 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		C9B3D0172908CF5400F5D9E6 /* Extentions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extentions.swift; sourceTree = "<group>"; };
 		C9B3D01B2908F60600F5D9E6 /* InputContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputContainerView.swift; sourceTree = "<group>"; };
@@ -162,6 +168,7 @@
 				C9B3D01D2908FAB200F5D9E6 /* CustomTextField.swift */,
 				C9B3D03A290A1EA800F5D9E6 /* MessageCell.swift */,
 				C9B3D02F290994BB00F5D9E6 /* UserCell.swift */,
+				C999862E2924DAF200F2C142 /* SideMenuUserCell.swift */,
 				C9D977B62918CF780048079C /* HomeMenuUserCell.swift */,
 				C9B3D038290A134800F5D9E6 /* CustomInputAccessoryView.swift */,
 				C914C63B291E008700F5A92D /* ChatCell.swift */,
@@ -176,9 +183,10 @@
 				C9B3D0142907DDE400F5D9E6 /* LoginViewController.swift */,
 				C9D977B42917EBD10048079C /* MainViewController.swift */,
 				C9B3D02229090B9500F5D9E6 /* ChattingMenuViewController.swift */,
-				C9B3D0262909200100F5D9E6 /* SettingMenuViewController.swift */,
 				C9B3D02D290987BA00F5D9E6 /* NewChattingController.swift */,
+				C9B3D0262909200100F5D9E6 /* SettingMenuViewController.swift */,
 				C9B3D03629099FC900F5D9E6 /* ChatController.swift */,
+				C999862C29249C6100F2C142 /* SideMenuViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -197,6 +205,7 @@
 			children = (
 				C9B3D02B29093EF100F5D9E6 /* AuthService.swift */,
 				C9B3D0342909990200F5D9E6 /* Service.swift */,
+				C966CA172923502400F0D0F9 /* SharedInfo.swift */,
 			);
 			path = API;
 			sourceTree = "<group>";
@@ -327,9 +336,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C966CA182923502400F0D0F9 /* SharedInfo.swift in Sources */,
 				C9B3D01E2908FAB200F5D9E6 /* CustomTextField.swift in Sources */,
 				C9B3D041290A3E5900F5D9E6 /* Constants.swift in Sources */,
 				C9D977B72918CF780048079C /* HomeMenuUserCell.swift in Sources */,
+				C999862D29249C6100F2C142 /* SideMenuViewController.swift in Sources */,
+				C999862F2924DAF200F2C142 /* SideMenuUserCell.swift in Sources */,
 				C9B3D0152907DDE400F5D9E6 /* LoginViewController.swift in Sources */,
 				C9B3D02E290987BA00F5D9E6 /* NewChattingController.swift in Sources */,
 				C9B3D01C2908F60600F5D9E6 /* InputContainerView.swift in Sources */,

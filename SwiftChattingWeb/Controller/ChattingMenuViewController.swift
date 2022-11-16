@@ -11,7 +11,7 @@ class ChattingMenuViewController: UIViewController {
     
     private let tableView = UITableView()
     private var rooms = [Room]()
-    private var user: User!
+    private var currentUser: User!
     
     private var containerView: UIView = {
         let view = UIView()
@@ -56,8 +56,12 @@ class ChattingMenuViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         navigationController?.navigationBar.isHidden = true
-        fetchUser()
-        fetchRooms()
+        async {
+            try await fetchRoomsInfo()
+            fetchRooms()
+            fetchCurrentUser()
+        }
+        
     }
     
     //MARK: Selectors
@@ -73,26 +77,43 @@ class ChattingMenuViewController: UIViewController {
     }
     
     //MARK: Firebase API
+    func fetchRoomsInfo() async throws -> Void {
         
-    func fetchRooms() {
-        Service.fetchRooms { readRooms in
-            self.rooms = readRooms
-            print("checkRoomExist 패치된 채팅방 : \(self.rooms) \n checkRoomExist 채팅방 불러오기 완료")
-            self.tableView.reloadData()
+        let currentUser = CurrentUserInfo.shared
+        let roomsInfo = RoomsInfo.shared
+        
+        var rooms = [Room]()
+        
+        guard let uid = currentUser.currentUserInfo?.uid else { return }
+ 
+        let query = COLLECTION_ROOMS.whereField("members", arrayContains: uid).order(by: "timestamp")
+        
+        let snapshot = try await query.getDocuments()
+        
+        snapshot.documents.forEach { document in
+            let dictionary = document.data()
+            let room = Room(dictionary:  dictionary)
+            rooms.append(room)
         }
+        
+        roomsInfo.rooms = rooms
     }
     
-    func fetchUser(){
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-                
-        Service.fetchCurrentUser(withUid: uid) { user in
-            self.user = user
-            self.titleLabel.text = "\(user.name)(\(user.nickname))"
-            print("현재 접속 유저 \(user.name) | \(user.nickname) | \(user.email) ")
-            self.emailLabel.text = user.email
-        }
+    func fetchRooms() {
+        let roomsInfo = RoomsInfo.shared
+        guard let rooms = roomsInfo.rooms else { return }
+        self.rooms = rooms
+        self.tableView.reloadData()
     }
+    
+    func fetchCurrentUser() {
+        let currentUserInfo = CurrentUserInfo.shared
+        self.currentUser = currentUserInfo.currentUserInfo
         
+        self.titleLabel.text = "\(self.currentUser.name)(\(self.currentUser.nickname))"
+        self.emailLabel.text = self.currentUser.email
+    }
+            
     //MARK: Configures and Helpers
     
     
@@ -164,7 +185,6 @@ extension ChattingMenuViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! ChatCell
-//        cell.textLabel?.text = rooms[indexPath.row].membersName.joined(separator: ", ")
         cell.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
         cell.room = rooms[indexPath.row]
 
@@ -174,12 +194,8 @@ extension ChattingMenuViewController: UITableViewDataSource {
 
 extension ChattingMenuViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        let room = rooms[indexPath.row]
-//        let chat = ChatController(room: room, currentUser: user)
-//
-//        navigationController?.pushViewController(chat, animated: true)
         let room = rooms[indexPath.row]
-        let controller = ChatController(room: room, currentUser: user)
+        let controller = ChatController(room: room, currentUser: currentUser)
      
         let nav = UINavigationController(rootViewController: controller)
         nav.modalPresentationStyle = .fullScreen
@@ -193,22 +209,12 @@ extension ChattingMenuViewController: UITableViewDelegate {
 extension ChattingMenuViewController: NewChattingControllerDelegate {
     func controller(_ controller: NewChattingController, wantGoRoom room: Room, fromCurrentUser currentUser: User) {
         
-//        let room = rooms[indexPath.row]
-//        let controller = ChatController(room: room, currentUser: user)
-//
-//        let nav = UINavigationController(rootViewController: controller)
-//        nav.modalPresentationStyle = .fullScreen
-//        present(nav, animated: true, completion: nil)
-
         controller.dismiss(animated: true, completion: nil)
-        
-//        let chat = ChatController(room: room, currentUser: currentUser)
-//        navigationController?.pushViewController(chat, animated: true)
-        
-//        let chat = ChatController(room: room, currentUser: currentUser)
-        let controller = ChatController(room: room, currentUser: user)
+
+        let controller = ChatController(room: room, currentUser: currentUser)
         let nav = UINavigationController(rootViewController: controller)
                 nav.modalPresentationStyle = .fullScreen
                 present(nav, animated: true, completion: nil)
     }
 }
+

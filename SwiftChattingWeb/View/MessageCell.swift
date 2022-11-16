@@ -1,7 +1,7 @@
 
 import UIKit
 import SDWebImage
-//import Kingfisher
+import Kingfisher
 
 class MessageCell: UICollectionViewCell {
     
@@ -130,6 +130,10 @@ class MessageCell: UICollectionViewCell {
         
         readedLabelRightAnchor = readedLabel.rightAnchor.constraint(equalTo: dateLabel.rightAnchor, constant: 0)
         readedLabelRightAnchor.isActive = false
+        
+        textView.isHidden = true
+        pikedImageView.isHidden = true
+        
     }
     
     required init?(coder: NSCoder) {
@@ -144,55 +148,15 @@ class MessageCell: UICollectionViewCell {
         
         bubbleContainer.backgroundColor = viewModel.messageBackgroundColor
                 
-        if message.imageURL == "" {
+        if message.mediaURL == "" {
             textView.isHidden = false
             pikedImageView.isHidden = true
             textView.text = message.text
         } else {
-                       
-            pikedImageView.isHidden = false
             textView.isHidden = true
-            
-            let imageView = UIImageView()
-//            imageView.kf.setImage(with: "")
-            
-//            imageView.kf.setImage(with: "url",
-//                completionHandler: {
-//                    result in
-//                switch result {
-//                case .success(let value):
-//                    imageView.image = value.image
-//                case .failure(_):
-//                    print("failure")
-//                }
-//            })
-//
-            
-            pikedImageView.kf.indicatorType = .activity
-
-            
-//            pikedImageView.sd_setImage(with: URL(string: message.imageURL))
-            
-//            pikedImageView.sd_setImage(with: URL(string: message.imageURL), placeholderImage: UIImage(), progress: { _, _, _   in
-//                print("사진을 로드 중입니다")
-//
-//            } ,completed: { (image: UIImage?, error: Error?, cacheType:SDImageCacheType!, imageURL: URL?) in
-//                self.pikedImageView.image = self.resizeImage(image: image!)
-//                print("이미지 불러오기 및 리사이징 완료")
-//            })
-            
-            pikedImageView.sd_setImage(with: URL(string: message.imageURL), placeholderImage: UIImage(named: "cod_logo"), options: [.highPriority]) { (image, error, cashtype, url) in
-                if image != nil{
-                    self.pikedImageView.image = self.resizeImage(image: image!)
-                    self.pikedImageView.contentMode = .scaleAspectFill
-                }
-               
-                
-                if let downloadedImage = image {
-                    
-                }
-            }
-                  
+            bubbleContainer.backgroundColor = .none
+            pikedImageView.image = message.imageView?.image
+            pikedImageView.isHidden = false
         }
         
         let date = message.timestamp.dateValue()
@@ -223,21 +187,4 @@ class MessageCell: UICollectionViewCell {
         profileImageView.isHidden = viewModel.sholudHideProfileImage
         nameLabel.isHidden = viewModel.sholudHideNameLabel
     }
-    
-    func resizeImage(image: UIImage) -> UIImage  {
-        
-        let originalWidth = image.size.width
-        let originalHeight = image.size.height
-        
-        let scaleFactor = 250 / originalWidth
-        let newHeight = originalHeight * scaleFactor
-        
-        UIGraphicsBeginImageContext(CGSize(width: 200, height: newHeight))
-        image.draw(in: CGRect(x: 0, y: 0, width: 200, height: newHeight))
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return newImage!
-    }
-    
 }

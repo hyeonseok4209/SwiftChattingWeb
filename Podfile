@@ -14,6 +14,7 @@ target 'SwiftChattingWeb' do
 	pod 'JGProgressHUD','~>2.0.3'
 	pod 'Kingfisher'
 	pod 'SDWebImage'
+	pod 'SideMenu'
 end
 
 post_install do |installer|

@@ -7,8 +7,8 @@ struct Service {
         var users = [User]()
 
         let currentUser = Auth.auth().currentUser
-        let uid = Auth.auth().currentUser?.uid
-        let currentQuery = COLLECTION_USERS.document(uid!)
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        let currentQuery = COLLECTION_USERS.document(uid)
         var friends: [String] = [] {
             didSet {
                 for friend in friends {
@@ -29,7 +29,6 @@ struct Service {
             let user = User(dictionary: dictionary)
                         
             friends = user.friends
-            print("유저패치값 : \(friends)")
             
         }
 
@@ -39,7 +38,7 @@ struct Service {
         
         var user:User = User(dictionary: ["": ""]) {
             didSet{
-                print("친구추가 didSet : \(user.uid)")
+
                 completion((user.uid, false))
             }
         }
@@ -49,7 +48,7 @@ struct Service {
         query.getDocuments { snapshot, error in
             
             if let error = error {
-                print("친구추가 에러 \(error.localizedDescription)")
+
             }
             
             let checkUsers = snapshot?.documents.count
@@ -70,7 +69,7 @@ struct Service {
             
         COLLECTION_USERS.document(uid).getDocument { (snapshot, error) in
             if let error = error {
-                print("fetchUser 에러 : \(error.localizedDescription)")
+
                 return
             }
             guard let dictionary = snapshot?.data() else { return }
@@ -80,30 +79,27 @@ struct Service {
     }
   
         
-    static func fetchMessages(roomID: String, completion: @escaping(([Message]) -> Void)){
-        var messages = [Message]()
-        
-        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: roomID).order(by: "timestamp")
-        
-        query.addSnapshotListener{(snapshot, error) in
-            if let error = error {
-                print("DEBUG FethMessage Error : \(error.localizedDescription)")
-            }
-            snapshot?.documentChanges.forEach({ change in
-                if change.type == .added {
-                    let dictionary = change.document.data()
-                    messages.append(Message(dictionary: dictionary))
-                    completion(messages)
-                }
-            })
-        }
-        
-    }
+//    static func fetchMessages(roomID: String, completion: @escaping(([Message]) -> Void)){
+//        var messages = [Message]()
+//
+//        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: roomID).order(by: "timestamp")
+//
+//        query.addSnapshotListener{(snapshot, error) in
+//            if let error = error {
+//
+//            }
+//            snapshot?.documentChanges.forEach({ change in
+//                if change.type == .added {
+//                    let dictionary = change.document.data()
+//                    messages.append(Message(dictionary: dictionary))
+//                    completion(messages)
+//                }
+//            })
+//        }
+//    }
     
     static func fetchRooms(completion: @escaping([Room]) -> Void) {
-        
-        print("Fetch Rooms 시작")
-        
+   
         var rooms = [Room]()
         
         guard let uid = Auth.auth().currentUser?.uid else { return }
@@ -119,13 +115,13 @@ struct Service {
                 let room = Room(dictionary:  dictionary)
                 rooms.append(room)
                 completion(rooms)
-                print("Rooms is Fetched 패치된 룸 값: \(rooms)")
+
             })
         }
     }
     
     static func uploadRooms(currentUser: (User), members checkedUsers: [String], membersName: [String], membersNickName:[String],  completion: @escaping((Room) -> Void)){
-        print("uploadRooms 시작")
+
         let id = COLLECTION_ROOMS.document().documentID
 
         let data = ["id": id,
@@ -141,10 +137,10 @@ struct Service {
         let room = Room(dictionary: data)
         completion(room)
 
-        print("uploadRooms 완료 채팅방 정보 : \(data)")
+
     }
     
-    static func uploadMessage(roomID: String, message: String, user: User, unReadedMembers: [String],  completion:((Error?) -> Void)?){
+    static func uploadMessage(roomID: String, message: String, user: User, unReadedMembers: [String],  completion: @escaping((Message) -> Void)){
         guard let currentUid = Auth.auth().currentUser?.uid else { return }
         
         let id = COLLECTION_MESSAGES.document().documentID
@@ -161,6 +157,11 @@ struct Service {
                     "timestamp": Timestamp(date: Date())] as [String : Any]
         
         COLLECTION_MESSAGES.document(id).setData(data)
+        
+        let message = Message(dictionary: data)
+        
+        completion(message)
+        
     }
     
     static func uploadimageMessage(roomID: String, image: Data, message: String, user: User, completion:((Error?) -> Void)?){
@@ -205,10 +206,9 @@ struct Service {
         
         membersName.append(readUser.name)
         membersNickname.append(readUser.nickname)
-        print("추가된 멤버 이름 : \(membersName)")
-        print("추가된 멤버 닉네임 : \(membersNickname)")
+
         completion(membersName, membersNickname)
-        print("completed [String] 유저이름 : \(membersName), 유저닉네임 : \(membersNickname)")
+
 
     }
 }

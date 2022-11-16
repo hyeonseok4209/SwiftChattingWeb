@@ -17,5 +17,4 @@ struct User {
         self.friends = dictionary["friends"] as? [String] ?? []
         
     }
-    
 }

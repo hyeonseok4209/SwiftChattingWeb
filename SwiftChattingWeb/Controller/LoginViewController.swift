@@ -107,6 +107,9 @@ class LoginViewController: UIViewController {
                 print("DEBUG: Failed to login with error \(error.localizedDescription)")
                 return
             }
+            async {
+                try await TabBarViewController().authenticateUser()
+            }
             self.dismiss(animated: true, completion: nil)
         }
     }

@@ -9,6 +9,8 @@ protocol CustomInputAccessoryViewDelegate: class {
     func inputView(_ inputView: CustomInputAccessoryView, wantsToSend message: String)
     
     func inputImageView(_ inputView: CustomInputAccessoryView, wantsToSend image: Data)
+    
+    func uploadVideo(_ inputView: CustomInputAccessoryView, wantsToSend videoURL: NSURL)
 }
 
 class CustomInputAccessoryView: UIView {
@@ -60,6 +62,7 @@ class CustomInputAccessoryView: UIView {
         button.setTitle("전송", for: .normal)
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 14)
         button.setTitleColor(.systemCyan, for: .normal)
+        button.setWidth(width: 50)
         button.addTarget(self, action: #selector(handleSendMessage), for: .touchUpInside)
         
         return button
@@ -89,21 +92,12 @@ class CustomInputAccessoryView: UIView {
         
         addSubview(addMediaButton)
         addMediaButton.anchor(top: topAnchor, left: leftAnchor, paddingTop: 10, paddingLeft: 8)
-
-        addSubview(messageInputTextView)
-        messageInputTextView.anchor(top: topAnchor, left: addMediaButton.rightAnchor, bottom: safeAreaLayoutGuide.bottomAnchor, paddingTop: 8, paddingLeft: 8, paddingBottom: 4, paddingRight: 8)
         
         addSubview(sendButton)
-        sendButton.anchor(top: topAnchor, left: messageInputTextView.rightAnchor, right: rightAnchor, paddingTop: 8, paddingLeft: 8, paddingRight: 12)
+        sendButton.anchor(top: topAnchor, right: rightAnchor, paddingTop: 8, paddingLeft: 8, paddingRight: 12)
         
-//        addSubview(imageViewContainer)
-//        imageViewContainer.anchor(left: leftAnchor, bottom: topAnchor, right: rightAnchor, height: 250)
-//        imageViewContainer.addSubview(pikedImageView)
-//        pikedImageView.image = sampleImage
-//        pikedImageView.anchor(top:imageViewContainer.topAnchor, bottom: imageViewContainer.bottomAnchor, paddingTop: 10, paddingBottom: 10)
-//        pikedImageView.centerX(inView: imageViewContainer)
-        
-//        NotificationCenter.default.addObserver(self, selector: #selector(handleTextInputChange), name: UITextView.textDidChangeNotification, object: nil)
+        addSubview(messageInputTextView)
+        messageInputTextView.anchor(top: topAnchor, left: addMediaButton.rightAnchor, bottom: safeAreaLayoutGuide.bottomAnchor, right: sendButton.leftAnchor, paddingTop: 8, paddingLeft: 8, paddingBottom: 4, paddingRight: 8)
     }
     
     // MARK: Selectors
@@ -111,8 +105,7 @@ class CustomInputAccessoryView: UIView {
     @objc func handleSendMessage() {
         print("handleSendMessage tapped")
         guard let message = messageInputTextView.text else { return }
-//        guard let image = pikedImage else { return }
-//        delegate?.inputView(self, sendAsText: message, sendAsImage: image)
+
         delegate?.inputView(self, wantsToSend: message)
     }
     
@@ -121,7 +114,7 @@ class CustomInputAccessoryView: UIView {
 //    }
     
     @objc func handleSendMedia() {
-//        print("현재 루트 뷰 : \(self.window?.rootViewController)")
+
         presentInputActionSheet()
     }
  
@@ -136,8 +129,13 @@ class CustomInputAccessoryView: UIView {
     
     func presentInputActionSheet() {
 
-        let picker = UIImagePickerController()
-        picker.delegate = self
+        let imagePicker = UIImagePickerController()
+        imagePicker.delegate = self
+        
+        let videoPicker = UIImagePickerController()
+        videoPicker.mediaTypes = ["public.movie"]
+        videoPicker.delegate = self
+        videoPicker.videoQuality = .typeMedium
         
         let actionSheet = UIAlertController(title: "미디어 전송",
                                             message: nil,
@@ -145,13 +143,13 @@ class CustomInputAccessoryView: UIView {
 
         actionSheet.addAction(UIAlertAction(title: "사진", style: .default, handler: { [weak self] _ in
             //사진 선택 실행 코드
-            self?.window?.rootViewController?.present(picker, animated: true, completion: nil)
+            self?.window?.rootViewController?.present(imagePicker, animated: true, completion: nil)
  
         }))
 
         actionSheet.addAction(UIAlertAction(title: "동영상", style: .default, handler: { [weak self] _ in
             //동영상 선택 실행 코드
-            print("동영상 tapped")
+            self?.window?.rootViewController?.present(videoPicker, animated: true, completion: nil)
         }))
 
         actionSheet.addAction(UIAlertAction(title: "취소", style: .cancel, handler: nil))
@@ -175,19 +173,18 @@ extension CustomInputAccessoryView: UIImagePickerControllerDelegate, UINavigatio
     }
 
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        let image = info[.originalImage] as? UIImage
-        pikedImage = image
         
-        guard let imageData = pikedImage?.jpegData(compressionQuality: 0.4) else { return }
-        
-        delegate?.inputImageView(self, wantsToSend: imageData)
-//        pikedImageView.image = sampleImage
-
-//        pikedImageView.image = pikedImage
-        
-        
-
-        picker.dismiss(animated: true, completion: nil)
+        if let image = info[.originalImage] as? UIImage {
+            pikedImage = image
+            
+            guard let imageData = pikedImage?.jpegData(compressionQuality: 0.4) else { return }
+            delegate?.inputImageView(self, wantsToSend: imageData)
+            
+            picker.dismiss(animated: true, completion: nil)
+        } else if let videoURL = info[.mediaURL] as? NSURL {
+            delegate?.uploadVideo(self, wantsToSend: videoURL.filePathURL! as NSURL)
+            picker.dismiss(animated: true, completion: nil)
+        }
 
     }
 }

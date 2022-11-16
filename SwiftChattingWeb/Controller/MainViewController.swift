@@ -8,6 +8,7 @@ private let reuseIdentifier = "HomeMenuUserCell"
 class MainViewController: UIViewController {
     
     //MARK: Properties
+    
     private var users = [User]()
     private var filteredUsers = [User]()
     private var rooms = [Room]()
@@ -59,19 +60,21 @@ class MainViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         fetchCurrentUser()
+        fetchUsers()
+        fetchRooms()
         configrueUI()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        fetchUsers()
-        fetchRooms()
+        
+        UsersInfo.shared.delegate = self
+        RoomsInfo.shared.delegate = self
     }
     
     //MARK: Selecters
     
     @objc func addUserAlert() {
-        print("alert 시작")
         let alert = UIAlertController(title: "친구추가", message: nil, preferredStyle: .alert)
         let confirm = UIAlertAction(title: "추가", style: .default) { (confirm) in
             var text:String? = alert.textFields?[0].text
@@ -131,21 +134,22 @@ class MainViewController: UIViewController {
     
     //MARK: Firebase APIs
     
-    func fetchUsers() {
-       
-        Service.fetchUsers{ users in
-            
-            self.users = users
-            self.tableView.reloadData()
-        }
+    func fetchCurrentUser() {
+        let currentUserInfo = CurrentUserInfo.shared
+        self.currentUser = currentUserInfo.currentUserInfo
     }
     
-    func fetchCurrentUser() {
-        guard let uid = Auth.auth().currentUser?.uid else { return }
-        
-        Service.fetchCurrentUser(withUid: uid) { user in
-            self.currentUser = user
-        }
+    func fetchUsers() {
+        let usersInfo = UsersInfo.shared
+        guard let users = usersInfo.users else { return }
+        self.users = users
+        self.tableView.reloadData()
+    }
+
+    func fetchRooms() {
+        let roomsInfo = RoomsInfo.shared
+        guard let rooms = roomsInfo.rooms else { return }
+        self.rooms = rooms
     }
         
     //MARK: Configures and Helpers
@@ -161,25 +165,12 @@ class MainViewController: UIViewController {
         navigationController?.navigationBar.barStyle = .black
         navigationController?.navigationBar.prefersLargeTitles = false
         navigationController?.navigationItem.largeTitleDisplayMode = .never
-        
-//        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: addUser)
-        
+                
         navigationController?.navigationBar.isHidden = false
         
         
         view.backgroundColor = .white
-        
-//        let hStack = UIStackView(arrangedSubviews: [searchUser, addUser])
-//        hStack.axis = .horizontal
-//        hStack.spacing = 20
-//        hStack.backgroundColor = .white
-//        view.addSubview(hStack)
-//
-//        hStack.anchor(top: view.safeAreaLayoutGuide.topAnchor, left: view.leftAnchor, right: view.rightAnchor, paddingTop: 10, paddingLeft: 20, paddingBottom: 20, paddingRight: 20)
-
-//        hStack.distribution = .fill
-
-                
+                        
         view.addSubview(containerView)
         containerView.anchor(top: view.safeAreaLayoutGuide.topAnchor, left: view.leftAnchor,
                              bottom: view.safeAreaLayoutGuide.bottomAnchor,
@@ -195,9 +186,7 @@ class MainViewController: UIViewController {
         navigationItem.searchController = searchController
         searchController.obscuresBackgroundDuringPresentation = false
         searchController.hidesNavigationBarDuringPresentation = false
-//        searchController.searchBar.placeholder = "메세지 검색하기"
         searchController.searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: "친구 검색하기", attributes: [NSAttributedString.Key.foregroundColor: UIColor.black])
-//        definesPresentationContext = false
         
         if let textField = searchController.searchBar.value(forKey: "searchField") as? UITextField {
             textField.textColor = .black
@@ -217,29 +206,6 @@ class MainViewController: UIViewController {
         
         containerView.addSubview(tableView)
         tableView.frame = view.frame
-    }
-    
-    func configurNavigationBar() {
-//        let appearance = UINavigationBarAppearance()
-//        appearance.configureWithOpaqueBackground()
-//        appearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
-//        appearance.backgroundColor = .systemBlue
-//
-//        navigationController?.navigationBar.standardAppearance = appearance
-//        navigationController?.navigationBar.compactAppearance = appearance
-//        navigationController?.navigationBar.scrollEdgeAppearance = appearance
-        
-//        navigationController?.navigationBar.prefersLargeTitles = true
-//        navigationController?.navigationBar.tintColor = .white
-//        navigationController?.navigationBar.isTranslucent = true
-//
-//        navigationController?.navigationBar.overrideUserInterfaceStyle = .dark
-    }
-    
-    func fetchRooms() {
-        Service.fetchRooms { rooms in
-            self.rooms = rooms
-        }
     }
 }
 
@@ -271,9 +237,7 @@ extension MainViewController:UITableViewDelegate {
         userName.append(userForIndex[indexPath.row].name)
         userName.append(currentUser!.name)
         userNickname.append(userForIndex[indexPath.row].nickname)
-        userNickname.append(currentUser!.nickname)
-        
-        print("룸 count값 : \(roomCount)")
+        userNickname.append(currentUser!.nickname) 
         
         for room in rooms {
             
@@ -284,8 +248,6 @@ extension MainViewController:UITableViewDelegate {
             }
             
             if roomMembers == userUID {
-//                let chat = ChatController(room: room, currentUser: currentUser!)
-//                navigationController?.pushViewController(chat, animated: true)
                 
                 let controller = ChatController(room: room, currentUser: currentUser!)
              
@@ -299,9 +261,11 @@ extension MainViewController:UITableViewDelegate {
                 if roomCount == count {
                     userUID.append(currentUser!.uid)
                     Service.uploadRooms(currentUser: currentUser!, members: userUID, membersName: userName, membersNickName: userNickname) { room in
-//                        let chat = ChatController(room: room, currentUser: self.currentUser!)
-//                        self.navigationController?.pushViewController(chat, animated: true)
                         let controller = ChatController(room: room, currentUser: self.currentUser!)
+                        let roomInfo = RoomsInfo.shared
+                        guard var getRooms = roomInfo.rooms else { return }
+                        getRooms.append(room)
+                        roomInfo.rooms = getRooms
                      
                         let nav = UINavigationController(rootViewController: controller)
                         nav.modalPresentationStyle = .fullScreen
@@ -325,4 +289,14 @@ extension MainViewController: UISearchResultsUpdating {
     }
 }
 
+extension MainViewController: UsersInfoDelegate {
+    func usersDidChanges() {
+        fetchUsers()
+    }
+}
 
+extension MainViewController: RoomsInfoDelegate {
+    func roomsDidChanges() {
+        fetchRooms()
+    } 
+}

@@ -9,7 +9,8 @@ struct Message {
     var userName: String
     var userNickname: String
     var unReadedMember: [String]
-    var imageURL: String
+    var mediaURL: String
+    var imageView: UIImageView?
     var timestamp: Timestamp!
     
     let isFromCurrentUser: Bool
@@ -22,9 +23,9 @@ struct Message {
         self.userName = dictionary["userName"] as? String ?? ""
         self.userNickname = dictionary["userNickname"] as? String ?? ""
         self.unReadedMember = dictionary["unReadedMember"] as? [String] ?? []
-        self.imageURL = dictionary["imageURL"] as? String ?? ""
+        self.mediaURL = dictionary["mediaURL"] as? String ?? ""
         self.timestamp = dictionary["timestamp"] as? Timestamp ?? Timestamp(date: Date())
-        
+
         self.isFromCurrentUser = fromID == Auth.auth().currentUser?.uid
     }
 }

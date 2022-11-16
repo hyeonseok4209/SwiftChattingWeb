@@ -8,6 +8,7 @@ protocol NewChattingControllerDelegate: class {
     func controller(_ controller: NewChattingController, wantGoRoom room: Room, fromCurrentUser currentUser: User)
 }
 
+
 class NewChattingController: UITableViewController {
     
     //MARK: Properties
@@ -37,22 +38,21 @@ class NewChattingController: UITableViewController {
     }
     
     @objc func handleConfirm() {
-        
         checkRoomExist()
-
     }
         
     //MARK: Firebase API
     
     func fetchUsers() {
-        Service.fetchUsers{ users in
-            self.users = users
-            self.tableView.reloadData()
-        }
+        let usersInfo = UsersInfo.shared
+        guard let users = usersInfo.users else { return }
+        self.users = users
+        self.tableView.reloadData()
     }
     
     func uploadRooms() {
-        
+        let roomsInfo = RoomsInfo.shared
+                
         let readCheckedUserInfo = readCheckedUserInfo()
         let membersName = readCheckedUserInfo.0
         let membersNickName = readCheckedUserInfo.1
@@ -60,15 +60,16 @@ class NewChattingController: UITableViewController {
         let currentUser = currentUser
         
         Service.uploadRooms(currentUser: currentUser!, members: checkedUsers, membersName: membersName, membersNickName: membersNickName) { room in
+            guard var getRooms = roomsInfo.rooms else { return }
+            getRooms.append(room)
+            roomsInfo.rooms = getRooms
             self.delegate?.controller(self, wantGoRoom: room, fromCurrentUser: self.currentUser)
         }
     }
         
     func fetchCurrentUser() {
-        guard let uid = Auth.auth().currentUser?.uid else { return  }
-        Service.fetchCurrentUser(withUid: uid) { user in
-            self.currentUser = user
-        }
+        let currentUserInfo = CurrentUserInfo.shared
+        self.currentUser = currentUserInfo.currentUserInfo
     }
     
     //MARK: Configures and Helpers
