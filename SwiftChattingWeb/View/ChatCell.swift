@@ -8,6 +8,9 @@ class ChatCell: UITableViewCell {
     var room: Room? {
         didSet { configure() }
     }
+        
+    var usersName: [String] = []
+    
     private let roomNameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 18)
@@ -23,7 +26,7 @@ class ChatCell: UITableViewCell {
         return label
     }()
     
-    //View LifeCycle
+    //MARK: View LifeCycle
     
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -43,13 +46,8 @@ class ChatCell: UITableViewCell {
     // MARK: Configures and Helpers
     
     func configure() {
-        guard let room = room else { return }
-        
-        roomNameLabel.text = room.membersName.joined(separator: ", ")
+        guard let room = self.room else { return }
+        roomNameLabel.text = self.usersName.joined(separator: ", ")
         recentMessageLabel.text = room.recentMessage
-        
     }
-    
-    
-    
 }

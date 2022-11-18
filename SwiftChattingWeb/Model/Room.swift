@@ -6,8 +6,8 @@ struct Room {
     let id: String?
     let createdBy: String
     var members: [String]
-    let membersName: [String]
-    let membersNickname: [String]
+    var membersName: [String]
+    var membersNickname: [String]
     let recentMessage: String
     let timestamp: Timestamp
     

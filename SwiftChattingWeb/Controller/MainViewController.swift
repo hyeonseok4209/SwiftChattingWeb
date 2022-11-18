@@ -68,8 +68,6 @@ class MainViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        UsersInfo.shared.delegate = self
-        RoomsInfo.shared.delegate = self
     }
     
     //MARK: Selecters
@@ -242,7 +240,7 @@ extension MainViewController:UITableViewDelegate {
         for room in rooms {
             
             var roomMembers:[String] = room.members
-            
+                        
             if let index = roomMembers.firstIndex(of: currentUser!.uid) {
                 roomMembers.remove(at: index)
             }
@@ -289,14 +287,4 @@ extension MainViewController: UISearchResultsUpdating {
     }
 }
 
-extension MainViewController: UsersInfoDelegate {
-    func usersDidChanges() {
-        fetchUsers()
-    }
-}
 
-extension MainViewController: RoomsInfoDelegate {
-    func roomsDidChanges() {
-        fetchRooms()
-    } 
-}

@@ -1,5 +1,6 @@
 
 import UIKit
+import Kingfisher
 
 class UserCell: UITableViewCell {
     
@@ -27,8 +28,7 @@ class UserCell: UITableViewCell {
         let imageView = UIImageView()
         
         imageView.backgroundColor = .lightGray
-        imageView.alpha = 0.5
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleToFill
         imageView.clipsToBounds = true
         
         return imageView
@@ -78,6 +78,9 @@ class UserCell: UITableViewCell {
     
     func configure() {
         guard let user = user else { return }
+        let url = URL(string: user.profileImageURL)
+        profileImageView.kf.setImage(with: url)
+        
         nicknameLabel.text = user.nickname
         nameLabel.text = user.name
     }

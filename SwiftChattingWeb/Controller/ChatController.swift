@@ -16,12 +16,7 @@ class ChatController: UICollectionViewController {
     private var room: Room
     private let currentUser: User
     private var unReadedMembers: [String]
-    private var messages = [Message]() {
-        didSet{
-            removeUnreadedMember()
-            fechMessages()
-        }
-    }
+    private var messages = [Message]()
     private var filteredMessages = [Message]()
     private let searchController = UISearchController(searchResultsController: nil)
     
@@ -61,9 +56,11 @@ class ChatController: UICollectionViewController {
             unReadedMembers.remove(at: index)
         }
         
+        fecthUserInfofromMessage()
         configureUI()
         configureSearchController()
-        fechMessagesInfo()
+        fechMessages()
+//        fechMessagesInfo()
     }
     
     override var inputAccessoryView: UIView? {
@@ -81,12 +78,16 @@ class ChatController: UICollectionViewController {
     }
     
     @objc func handleSideMenu() {
+        
+        inputAccessoryView?.removeFromSuperview()
+        
         var sideMenuSet = SideMenuSettings()
         sideMenuSet.presentationStyle = .menuSlideIn
         sideMenuSet.presentationStyle.backgroundColor = .clear
 
         let controller = SideMenuViewController()
         controller.room = self.room
+        controller.messages = self.messages
         
         let sideMenu = SideMenuNavigationController(rootViewController: controller, settings: sideMenuSet)
         
@@ -113,7 +114,8 @@ class ChatController: UICollectionViewController {
                             message.imageView = imageView
                             messages.append(message)
                             self.messages = messages
-                            self.fechMessages()
+                            self.collectionView.reloadData()
+                            self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
                             self.removeUnreadedMember()
                         case .failure(let error):
                             print("이미지 불러오기 실패: \(error.localizedDescription)")
@@ -130,66 +132,93 @@ class ChatController: UICollectionViewController {
                         message.imageView = imageView
                         messages.append(message)
                         self.messages = messages
-                        self.fechMessages()
+                        self.collectionView.reloadData()
+                        self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
                         self.removeUnreadedMember()
                     } catch { print("썸네일 에러") }
                 } else {
                     messages.append(message)
                     self.messages = messages
-                    self.fechMessages()
+                    self.collectionView.reloadData()
+                    self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
                     self.removeUnreadedMember()
                 }
             })
         }
     }
     
-    func fechMessagesInfo_async() async throws -> Void {
-        var messages = [Message]()
+    func fechMessages() {
         
         let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
-        let snapshot = try await query.getDocuments()
-        
-        snapshot.documents.forEach ({ document in
-            let imageView = UIImageView()
-            let dictionary = document.data()
-            var message = Message(dictionary: dictionary)
-            
-            if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
-                let url = URL(string: message.mediaURL)
-                imageView.kf.setImage(with: url) {
-                    result in
-                    switch result {
-                    case .success(let value):
-                        imageView.image = self.resizeImage(image: value.image)
+        let imageView = UIImageView()
+        var messages = self.messages
+        query.addSnapshotListener { snapshot, error in
+            snapshot?.documentChanges.forEach({ change in
+                let dictionary = change.document.data()
+                var message = Message(dictionary: dictionary)
+                if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
+                    let url = URL(string: message.mediaURL)
+                    imageView.kf.setImage(with: url) {
+                        result in
+                        switch result {
+                        case .success(let value):
+                            imageView.image = self.resizeImage(image: value.image)
+                            message.imageView = imageView
+                            messages.append(message)
+                            self.messages = messages
+                            self.collectionView.reloadData()
+                            self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
+                            self.removeUnreadedMember()
+                        case .failure(let error):
+                            print("이미지 불러오기 실패: \(error.localizedDescription)")
+                        }
+                    }
+                } else if message.mediaURL != "" && message.mediaURL.contains(".mov") {
+                    guard let url = URL(string: message.mediaURL) else { return }
+                    print("동영상 URL \(url)")
+                    let asset: AVAsset = AVAsset(url: url)
+                    let imageGenerator = AVAssetImageGenerator(asset: asset)
+                    do {
+                        let thumbnailImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
+                        imageView.image = self.resizeImage(image: UIImage(cgImage: thumbnailImage))
                         message.imageView = imageView
                         messages.append(message)
-                    case .failure(let error):
-                        print("이미지 불러오기 실패: \(error.localizedDescription)")
-                    }
-                }
-            } else if message.mediaURL != "" && message.mediaURL.contains(".mov") {
-                guard let url = URL(string: message.mediaURL) else { return }
-                print("동영상 URL \(url)")
-                let asset: AVAsset = AVAsset(url: url)
-                let imageGenerator = AVAssetImageGenerator(asset: asset)
-                do {
-                    let thumbnailImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
-                    imageView.image = self.resizeImage(image: UIImage(cgImage: thumbnailImage))
-                    message.imageView = imageView
+                        self.messages = messages
+                        self.collectionView.reloadData()
+                        self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
+                        self.removeUnreadedMember()
+                    } catch { print("썸네일 에러") }
+                } else {
                     messages.append(message)
-                } catch { print("썸네일 에러") }
-                
-            } else {  messages.append(message) }
-        })
-        
-        self.messages = messages
-        
+                    self.messages = messages
+                    self.collectionView.reloadData()
+                    self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
+                    self.removeUnreadedMember()
+                }
+            })
+        }
     }
-    
-    func fechMessages() {
-        self.collectionView.reloadData()
-        self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-    }
+        
+//    func fechMessages() {
+//
+//        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
+//        var messages = self.messages
+//        query.addSnapshotListener { snapshot, error in
+//            snapshot?.documentChanges.forEach({ change in
+//                if change.type == .added {
+//                    print("메세지 리스너 감지")
+//                    let dictionary = change.document.data()
+//                    var message = Message(dictionary: dictionary)
+//                    messages.append(message)
+//                    self.messages = messages
+//
+//                    self.collectionView.reloadData()
+//                    self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
+//                    self.removeUnreadedMember()
+//                }
+//            })
+//        }
+//    }
     
     func fetchCurrentChatUsers() async throws -> [User]? {
         let members = room.members
@@ -274,6 +303,40 @@ class ChatController: UICollectionViewController {
             count += 1
         }
     }
+    
+    func fecthUserInfofromMessage() {
+        let qurey = COLLECTION_USERS
+        qurey.addSnapshotListener { snapshot, error in
+            snapshot?.documentChanges.forEach({ change in
+                if change.type == .modified {
+                    let dictionary = change.document.data()
+                    let userInfo = User(dictionary: dictionary)
+                    var index:Int = 0
+                    for message in self.messages {
+                        if message.fromID == userInfo.uid{
+                            
+                            let messageQuery = COLLECTION_MESSAGES.document(message.id)
+                            messageQuery.updateData(["userName" : userInfo.name])
+                            messageQuery.updateData(["userNickname" : userInfo.nickname])
+                            
+                            self.messages[index].userName = userInfo.name
+                            self.messages[index].userNickname = userInfo.nickname
+                            index += 1
+                        } else { index += 1 }
+                    }
+                }
+            })
+        }
+    }
+    
+//    func fecthUserInfofromMessage(message: Message) async throws -> User? {
+//        let qurey = COLLECTION_USERS.document(message.fromID)
+//        let snapshot = try await qurey.getDocument()
+//        guard let dictionary = snapshot.data() else { return nil }
+//        let userInfo = User(dictionary: dictionary)
+//
+//        return userInfo
+//    }
 }
 
 extension ChatController {
@@ -282,8 +345,9 @@ extension ChatController {
     }
     
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        
+                
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! MessageCell
+                
         cell.message = inSearchMode ? filteredMessages[indexPath.row] : messages[indexPath.row]
  
         return cell
@@ -345,6 +409,7 @@ extension ChatController: CustomInputAccessoryViewDelegate {
         COLLECTION_MESSAGES.document(id).setData(data)
         COLLECTION_ROOMS.document(roomID).updateData(["recentMessage" : message])
         
+        let messagesInfo = MessageInfo.shared
         let setMessage = Message(dictionary: data)
         var getMessages = self.messages
         getMessages.append(setMessage)

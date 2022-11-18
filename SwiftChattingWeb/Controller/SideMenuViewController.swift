@@ -9,6 +9,7 @@ class SideMenuViewController: UIViewController {
     
     var room: Room?
     var users = [User]()
+    var messages = [Message]()
     
     private let tableView = UITableView()
     
@@ -19,6 +20,7 @@ class SideMenuViewController: UIViewController {
         button.backgroundColor = .systemBlue
         button.titleLabel?.font = UIFont.boldSystemFont(ofSize: 16)
         button.setTitleColor(.white, for: .normal)
+        button.addTarget(self, action: #selector(exitHandler), for: .touchUpInside)
         
         return button
     }()
@@ -44,6 +46,99 @@ class SideMenuViewController: UIViewController {
         
     }
     
+    // MARK: Selectors
+    
+    @objc func exitHandler() {
+        guard let roomInfo = room else { return }
+        //채팅방 인원이 2명 이하인 경우
+        if roomInfo.members.count <= 2 {
+            removeRoom(room: roomInfo)
+            removeMessages(room: roomInfo)
+            
+            let rootView = presentingViewController
+
+            dismiss(animated: true, completion: {
+                rootView?.dismiss(animated: true)
+            })
+        } else {
+            removeMember(room: roomInfo)
+            
+            let rootView = presentingViewController
+
+            dismiss(animated: true, completion: {
+                rootView?.dismiss(animated: true)
+            })
+        }
+    }
+    
+    func removeRoom(room:Room) {
+        COLLECTION_ROOMS.document(room.id!).delete() { error in
+            if let error = error { print("채팅방 나가기 및 해당 채팅방 삭제 에러: \(error.localizedDescription)")}
+
+            let roomsInfo = RoomsInfo.shared
+            var rooms = roomsInfo.rooms
+            rooms = rooms?.filter({ room in
+                room.id != room.id
+            })
+            roomsInfo.rooms = rooms
+        }
+    }
+    
+    func removeMessages(room:Room) {
+        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!)
+        query.getDocuments { snapshot, error in
+            snapshot?.documents.forEach({ document in
+                document.reference.delete()
+            })
+            if ((snapshot?.isEmpty) != nil) {
+
+            }
+        }
+    }
+    
+    func removeMember(room:Room){
+        
+        
+        
+        var getRoom = room
+        let currentUserInfo = CurrentUserInfo.shared
+        guard let currentUser = currentUserInfo.currentUserInfo else { return }
+        let roomsInfo = RoomsInfo.shared
+        guard var rooms = roomsInfo.rooms else { return }
+        
+        let query = COLLECTION_ROOMS.document(room.id!)
+        query.updateData([
+            "members" : FieldValue.arrayRemove([currentUser.uid]),
+            "membersName" : FieldValue.arrayRemove([currentUser.name]),
+            "membersNickname" : FieldValue.arrayRemove([currentUser.nickname])
+        ])
+        
+        
+        rooms = rooms.filter({ getRoom in
+            getRoom.id != getRoom.id
+        })
+                
+        let filteredMembers = getRoom.members.filter { member in
+            member != currentUser.uid
+        }
+        
+        let filteredNames = getRoom.membersName.filter { name in
+            name != currentUser.name
+        }
+        
+        let filteredNicknames = getRoom.membersNickname.filter { nickname in
+            nickname != currentUser.nickname
+        }
+        
+        getRoom.members = filteredMembers
+        getRoom.membersName = filteredNames
+        getRoom.membersNickname = filteredNicknames
+        
+        rooms.append(getRoom)
+        roomsInfo.rooms = rooms
+    }
+
+    
     //MARK: Configure and Helpers
     
     func configureUI() {
@@ -55,8 +150,7 @@ class SideMenuViewController: UIViewController {
     }
     
     func configureTableView() {
-        
-                
+ 
         tableView.tableFooterView = UIView()
         tableView.register(SideMenuUserCell.self, forCellReuseIdentifier: reuseIdentifier)
         tableView.rowHeight = 85
@@ -85,28 +179,13 @@ class SideMenuViewController: UIViewController {
 }
 
 extension SideMenuViewController: UITableViewDataSource {
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-                
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {       
         let usersCount = users.count
         
         return usersCount
     }
     
-    
-//    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
-//        let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! HomeMenuUserCell
-//        cell.backgroundColor = .white
-//        cell.selectionStyle = .none
-//        guard let getUsers = users else { return cell }
-//        print("현재 유저 정보 \(getUsers)")
-//        cell.user = getUsers[indexPath.row]
-//
-//        return cell
-//    }
-    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        
-        print("cell 설정 시작")
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! SideMenuUserCell
         
         cell.user = users[indexPath.row]

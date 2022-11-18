@@ -11,6 +11,8 @@ target 'SwiftChattingWeb' do
 	pod 'Firebase/Storage'
 	pod 'Firebase/Auth'
 	pod 'Firebase/Firestore'
+	pod 'Firebase/Analytics'
+	pod 'Firebase/Messaging'
 	pod 'JGProgressHUD','~>2.0.3'
 	pod 'Kingfisher'
 	pod 'SDWebImage'

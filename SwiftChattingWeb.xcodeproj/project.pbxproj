@@ -38,6 +38,7 @@
 		C9B3D03D290A332B00F5D9E6 /* Message.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D03C290A332B00F5D9E6 /* Message.swift */; };
 		C9B3D03F290A366700F5D9E6 /* MessageViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D03E290A366700F5D9E6 /* MessageViewModel.swift */; };
 		C9B3D041290A3E5900F5D9E6 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9B3D040290A3E5900F5D9E6 /* Constants.swift */; };
+		C9C18694292759B10062BCF2 /* SingUpViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9C18693292759B10062BCF2 /* SingUpViewController.swift */; };
 		C9D977B52917EBD10048079C /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D977B42917EBD10048079C /* MainViewController.swift */; };
 		C9D977B72918CF780048079C /* HomeMenuUserCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9D977B62918CF780048079C /* HomeMenuUserCell.swift */; };
 		C9FCFEAC290FCB09005CACEB /* Room.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9FCFEAB290FCB09005CACEB /* Room.swift */; };
@@ -60,6 +61,7 @@
 		C966CA172923502400F0D0F9 /* SharedInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedInfo.swift; sourceTree = "<group>"; };
 		C999862C29249C6100F2C142 /* SideMenuViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuViewController.swift; sourceTree = "<group>"; };
 		C999862E2924DAF200F2C142 /* SideMenuUserCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SideMenuUserCell.swift; sourceTree = "<group>"; };
+		C9AFE2BB2926101F00911C18 /* SwiftChattingWeb.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SwiftChattingWeb.entitlements; sourceTree = "<group>"; };
 		C9B3D0142907DDE400F5D9E6 /* LoginViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginViewController.swift; sourceTree = "<group>"; };
 		C9B3D0172908CF5400F5D9E6 /* Extentions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extentions.swift; sourceTree = "<group>"; };
 		C9B3D01B2908F60600F5D9E6 /* InputContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputContainerView.swift; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 		C9B3D03C290A332B00F5D9E6 /* Message.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Message.swift; sourceTree = "<group>"; };
 		C9B3D03E290A366700F5D9E6 /* MessageViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageViewModel.swift; sourceTree = "<group>"; };
 		C9B3D040290A3E5900F5D9E6 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
+		C9C18693292759B10062BCF2 /* SingUpViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SingUpViewController.swift; sourceTree = "<group>"; };
 		C9D977B42917EBD10048079C /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
 		C9D977B62918CF780048079C /* HomeMenuUserCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeMenuUserCell.swift; sourceTree = "<group>"; };
 		C9FCFEAB290FCB09005CACEB /* Room.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Room.swift; sourceTree = "<group>"; };
@@ -134,6 +137,7 @@
 		C937F9052907B0830082C477 /* SwiftChattingWeb */ = {
 			isa = PBXGroup;
 			children = (
+				C9AFE2BB2926101F00911C18 /* SwiftChattingWeb.entitlements */,
 				C9B3D0312909988B00F5D9E6 /* Model */,
 				C9B3D01F2909042000F5D9E6 /* ViewModel */,
 				C9B3D01A2908F5E700F5D9E6 /* Controller */,
@@ -184,9 +188,11 @@
 				C9D977B42917EBD10048079C /* MainViewController.swift */,
 				C9B3D02229090B9500F5D9E6 /* ChattingMenuViewController.swift */,
 				C9B3D02D290987BA00F5D9E6 /* NewChattingController.swift */,
+				C9B3D03C290A332B00F5D9E6 /* Message.swift */,
 				C9B3D0262909200100F5D9E6 /* SettingMenuViewController.swift */,
 				C9B3D03629099FC900F5D9E6 /* ChatController.swift */,
 				C999862C29249C6100F2C142 /* SideMenuViewController.swift */,
+				C9C18693292759B10062BCF2 /* SingUpViewController.swift */,
 			);
 			path = Controller;
 			sourceTree = "<group>";
@@ -214,7 +220,6 @@
 			isa = PBXGroup;
 			children = (
 				C9B3D0322909989300F5D9E6 /* User.swift */,
-				C9B3D03C290A332B00F5D9E6 /* Message.swift */,
 				C9FCFEAB290FCB09005CACEB /* Room.swift */,
 			);
 			path = Model;
@@ -358,6 +363,7 @@
 				C9D977B52917EBD10048079C /* MainViewController.swift in Sources */,
 				C9B3D0272909200100F5D9E6 /* SettingMenuViewController.swift in Sources */,
 				C9B3D0182908CF5400F5D9E6 /* Extentions.swift in Sources */,
+				C9C18694292759B10062BCF2 /* SingUpViewController.swift in Sources */,
 				C937F9072907B0830082C477 /* AppDelegate.swift in Sources */,
 				C9B3D03729099FC900F5D9E6 /* ChatController.swift in Sources */,
 				C9B3D02529091DD900F5D9E6 /* TabBarViewController.swift in Sources */,
@@ -510,6 +516,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SwiftChattingWeb/SwiftChattingWeb.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 259YQUK99X;
@@ -540,6 +547,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = SwiftChattingWeb/SwiftChattingWeb.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 259YQUK99X;

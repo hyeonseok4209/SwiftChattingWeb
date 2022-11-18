@@ -7,6 +7,8 @@ class MessageCell: UICollectionViewCell {
     
     // MARK: Properties
     
+    var userInfo: User?
+    
     var message: Message? {
         didSet { configure() }
     }
@@ -25,8 +27,7 @@ class MessageCell: UICollectionViewCell {
         let imageView = UIImageView()
         
         imageView.backgroundColor = .lightGray
-        imageView.alpha = 0.5
-        imageView.contentMode = .scaleAspectFit
+        imageView.contentMode = .scaleToFill
         imageView.clipsToBounds = true
         
         return imageView
@@ -144,6 +145,16 @@ class MessageCell: UICollectionViewCell {
     
     func configure() {
         guard let message = message else { return }
+        let query = COLLECTION_USERS.document(message.fromID)
+
+        query.getDocument { snapsot, error in
+            guard let url = snapsot?.get("profileImageURL") else { return }
+            let stringURL = String(describing: url)
+            print("이미지 URL : \(stringURL)")
+            let imageURL = URL(string: stringURL)
+            self.profileImageView.kf.setImage(with: imageURL)
+        }
+        
         let viewModel = MessageViewModel(message: message)
         
         bubbleContainer.backgroundColor = viewModel.messageBackgroundColor

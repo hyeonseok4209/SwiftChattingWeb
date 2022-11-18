@@ -40,20 +40,18 @@ class TabBarViewController: UITabBarController {
         super.viewDidLoad()
         view.backgroundColor = .white
         
-        requestAuthNotification()
-
-        requestSendNotification(seconds: 3)
-
-        
         async {
             try await authenticateUser()
             configureUI()
+//            UsersInfo.shared.delegate = self
+//            RoomsInfo.shared.delegate = self
+//            MessageInfo.shared.delegate = self
         }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
+//        messagesAddListender()
         navigationController?.navigationBar.isHidden = true
         
     }
@@ -71,12 +69,13 @@ class TabBarViewController: UITabBarController {
     }
     
     //MARK: Get Infos form API
-        
+    
+    //현재 유저 정보 업데이트
     func fetchCurrentUserInfo() async throws -> Void {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let query = COLLECTION_USERS.document(uid)
         let currentUser = CurrentUserInfo.shared
-        
+                
         let snapshot = try await query.getDocument()
         guard let dictionary = snapshot.data() else { return }
         
@@ -86,6 +85,7 @@ class TabBarViewController: UITabBarController {
         print("현재 접속유저 | 이메일: \(currentUserInfo.email),이름: \(currentUserInfo.name), 닉네임:\(currentUserInfo.nickname)")
     }
     
+    //현재 유저와 친구인 유저 정보 업데이트
     func fetchUsersInfo() async throws -> Void {
         let currentUser = CurrentUserInfo.shared
         let usersInfo = UsersInfo.shared
@@ -106,6 +106,7 @@ class TabBarViewController: UITabBarController {
         usersInfo.users = users
     }
     
+    // 현재유저가 멤버로 포함된 채팅방 업데이트
     func fetchRoomsInfo() async throws -> Void {
         
         let currentUser = CurrentUserInfo.shared
@@ -127,6 +128,28 @@ class TabBarViewController: UITabBarController {
         
         roomsInfo.rooms = rooms
     }
+ 
+    //유저 정보 업데이트
+    
+    func fetchUsers() {
+        let usersInfo = UsersInfo.shared
+        guard let users = usersInfo.users else { return }
+        usersInfo.users = users
+    }
+
+    //채팅방 정보 업데이트
+    func fetchRooms() {
+        let roomsInfo = RoomsInfo.shared
+        guard let rooms = roomsInfo.rooms else { return }
+        roomsInfo.rooms = rooms
+    }
+    
+    //메세지 정보 업데이트
+    func fetchMessages() {
+        let messagesInfo = MessageInfo.shared
+        guard let messages = messagesInfo.messages else { return }
+        messagesInfo.messages = messages
+    }
         
     //MARK: Configures and Helpers
     
@@ -147,44 +170,23 @@ class TabBarViewController: UITabBarController {
         
         viewControllers = [mainMenuView,chattingMenuView, settingMenuView]
     }
-    
-    func requestAuthNotification() {
-        let notificationAuthOptions = UNAuthorizationOptions(arrayLiteral: [.alert, .badge, .sound])
-        center.requestAuthorization(options: notificationAuthOptions) { success, error in
-            if let error = error {
-                print("Error: \(error.localizedDescription)")
-            }
-        }
-    }
-    
-    func requestSendNotification(seconds: Double) {
-        let content = UNMutableNotificationContent()
-        content.title = "알림 제목"
-        content.body = "알림 내용"
-            
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
-        let request = UNNotificationRequest(identifier: UUID().uuidString,
-                                            content: content,
-                                            trigger: trigger)
-            
-        center.add(request) { error in
-            if let error = error {
-            print("Error: \(error.localizedDescription)")
-            }
-        }
+}
+
+
+extension TabBarViewController: UsersInfoDelegate {
+    func usersDidChanges() {
+        fetchUsers()
     }
 }
 
-extension AppDelegate: UNUserNotificationCenterDelegate {
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                willPresent notification: UNNotification,
-                                withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        completionHandler([.alert, .badge, .sound])
-    }
-    
-    func userNotificationCenter(_ center: UNUserNotificationCenter,
-                                didReceive response: UNNotificationResponse,
-                                withCompletionHandler completionHandler: @escaping () -> Void) {
-        completionHandler()
+extension TabBarViewController: RoomsInfoDelegate {
+    func roomsDidChanges() {
+        fetchRooms()
     }
 }
+
+extension TabBarViewController: MessagesInfoDelegate {
+    func messagesDidChanges() {
+    }
+}
+

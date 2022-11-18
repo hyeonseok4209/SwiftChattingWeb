@@ -12,6 +12,27 @@ class ChattingMenuViewController: UIViewController {
     private let tableView = UITableView()
     private var rooms = [Room]()
     private var currentUser: User!
+    private var filteredRooms = [Room]()
+    
+    private let searchController = UISearchController(searchResultsController: nil)
+    
+    private var inSearchMode: Bool {
+        return searchController.isActive &&
+        !searchController.searchBar.text!.isEmpty
+    }
+    
+    private let searchUser: UITextField = {
+        let textField = UITextField()
+//        textField.borderStyle = .line
+        textField.layer.borderWidth = 0.5
+        textField.layer.borderColor = UIColor.lightGray.cgColor
+        textField.layer.cornerRadius = 10
+        textField.font = UIFont.systemFont(ofSize: 16)
+        textField.placeholder = "  친구검색"
+        textField.setContentHuggingPriority(UILayoutPriority.defaultLow, for: .horizontal)
+
+        return textField
+    }()
     
     private var containerView: UIView = {
         let view = UIView()
@@ -55,7 +76,6 @@ class ChattingMenuViewController: UIViewController {
 
     
     override func viewWillAppear(_ animated: Bool) {
-        navigationController?.navigationBar.isHidden = true
         async {
             try await fetchRoomsInfo()
             fetchRooms()
@@ -95,7 +115,7 @@ class ChattingMenuViewController: UIViewController {
             let room = Room(dictionary:  dictionary)
             rooms.append(room)
         }
-        
+        self.rooms = rooms
         roomsInfo.rooms = rooms
     }
     
@@ -113,11 +133,45 @@ class ChattingMenuViewController: UIViewController {
         self.titleLabel.text = "\(self.currentUser.name)(\(self.currentUser.nickname))"
         self.emailLabel.text = self.currentUser.email
     }
+    
+    func fechtMemberInfo(indexPath: Int) async throws -> [String] {
+
+        let members = rooms[indexPath].members
+        print("인덱스 [ \(indexPath) ]의 룸 멤버스 : \(members) ")
+        var usersName:[String] = []
+        
+        for member in members {
+            let query = COLLECTION_USERS.document(member)
+            let document = try await query.getDocument()
+            guard let dictionary = document.data() else { return [] }
+            let userInfo = User(dictionary: dictionary)
+            usersName.append(userInfo.name)
+        }
+            
+        return usersName
+    }
+    
+//    func fechtMemberInfo(indexPath: Int) async throws -> [String] {
+//        let members = rooms[indexPath].members
+//        var usersName:[String] = []
+//        for user in members {
+//            let query = COLLECTION_USERS.document(user)
+//            let document = try await query.getDocument()
+//            guard let dictionary = document.data() else { return []}
+//            let userInfo = User(dictionary: dictionary)
+//            usersName.append(userInfo.name)
+//        }
+//
+//        return usersName
+//    }
             
     //MARK: Configures and Helpers
     
     
     func configureUI() {
+        
+        configureSearchController()
+        
         view.backgroundColor = .white
         
         let vStack = UIStackView(arrangedSubviews: [titleLabel, emailLabel])
@@ -169,12 +223,28 @@ class ChattingMenuViewController: UIViewController {
         navigationController?.navigationBar.compactAppearance = appearance
         navigationController?.navigationBar.scrollEdgeAppearance = appearance
         
-//        navigationController?.navigationBar.prefersLargeTitles = true
+        navigationController?.navigationBar.prefersLargeTitles = false
         navigationItem.title = "Messages"
         navigationController?.navigationBar.tintColor = .white
         navigationController?.navigationBar.isTranslucent = true
         
         navigationController?.navigationBar.overrideUserInterfaceStyle = .dark
+    }
+    
+    func configureSearchController() {
+        searchController.searchResultsUpdater = self
+        searchController.searchBar.showsCancelButton = false
+        navigationItem.searchController = searchController
+        searchController.obscuresBackgroundDuringPresentation = false
+        searchController.hidesNavigationBarDuringPresentation = false
+        searchController.searchBar.searchTextField.attributedPlaceholder = NSAttributedString(string: "친구 검색하기", attributes: [NSAttributedString.Key.foregroundColor: UIColor.black])
+        
+        if let textField = searchController.searchBar.value(forKey: "searchField") as? UITextField {
+            textField.textColor = .black
+            if let clearButton = textField.value(forKey: "clearButton") as? UIButton {
+                clearButton.tintColor = .black
+            }
+        }
     }
 }
 
@@ -186,7 +256,10 @@ extension ChattingMenuViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell{
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! ChatCell
         cell.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
-        cell.room = rooms[indexPath.row]
+        async {
+            cell.usersName = try await fechtMemberInfo(indexPath: indexPath.row)
+            cell.room = rooms[indexPath.row]
+        }
 
         return cell
     }
@@ -218,3 +291,14 @@ extension ChattingMenuViewController: NewChattingControllerDelegate {
     }
 }
 
+extension ChattingMenuViewController: UISearchResultsUpdating {
+    func updateSearchResults(for searchController: UISearchController) {
+        guard let searchText = searchController.searchBar.text?.lowercased() else { return }
+        
+        filteredRooms = rooms.filter({ room -> Bool in
+            return (room.membersName.contains(searchText))
+        })
+        
+        self.tableView.reloadData()
+    }
+}

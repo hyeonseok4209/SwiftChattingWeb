@@ -73,6 +73,7 @@ class LoginViewController: UIViewController {
                                                   attributes:
                                                     [.font: UIFont.boldSystemFont(ofSize: 16), .foregroundColor: UIColor.white]))
         button.setAttributedTitle(attributedTitle, for: .normal)
+        button.addTarget(self, action: #selector(handleSignUpButton), for: .touchUpInside)
         return button
     }()
     
@@ -114,6 +115,18 @@ class LoginViewController: UIViewController {
         }
     }
     
+    @objc func handleSignUpButton() {
+        let controller = SingUpViewController()
+         
+        let nav = UINavigationController(rootViewController: controller)
+        nav.modalPresentationStyle = .fullScreen
+        present(nav, animated: true, completion: nil)
+    }
+    
+    @objc func handleDismiss() {
+        dismiss(animated: true, completion: nil)
+    }
+    
     //MARK: Configures and Helpers
     
     func checkFormStatus() {
@@ -127,7 +140,8 @@ class LoginViewController: UIViewController {
     }
     
     func configureUI() {
-        navigationController?.navigationBar.isHidden = true
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(handleDismiss))
+        navigationController?.navigationBar.isHidden = false
         navigationController?.navigationBar.barStyle = .black
             
         configureGradientLayer()
