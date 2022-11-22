@@ -269,7 +269,11 @@ class ChatController: UICollectionViewController {
         configurNavigationBar()
         
 //        let collectionViewLayout = CustumCollectionViewLayout()
+        
+
+        
         let collectionViewLayout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
+        collectionViewLayout.estimatedItemSize = CGSize(width: view.frame.width , height: 800)
         collectionView.register(MessageCell.self, forCellWithReuseIdentifier: reuseIdentifier)
 //        collectionViewLayout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
 //        collectionViewLayout.minimumInteritemSpacing = 10
@@ -382,60 +386,29 @@ extension ChatController {
 //        imageView.setDimensions(height: 90, width: 200)
 //        imageView.image = UIImage(named: "imagePlaceholder")
         
-        if message.mediaURL == "" {
-            cell.message = message
-        } else if message.mediaURL.contains(".mov") {
-            let imageView = UIImageView()
-            print("동영상 메세지 입니다 in ChatController")
-            message.imageView?.image = imageView.image
-            cell.message = message
-        } else {
-            let urlString = message.mediaURL
-
-            ImageCache.default.retrieveImage(forKey: urlString, options: nil) { result in
-                switch result {
-                case .success(let value):
-                    if value.image != nil {
-                        //캐시가 존재하는 경우
-                        message.imageView = UIImageView()
-                        message.imageView?.image = value.image
-                    } else {
-                        //캐시가 존재하지 않는 경우
-                        let url = URL(string: urlString)
-                        let resource = ImageResource(downloadURL: url!, cacheKey: urlString)
-                        let imageView = UIImageView()
-                        
-                        imageView.kf.setImage(
-                            with: resource,
-                            options: [.cacheMemoryOnly]) {
-                            result in
-                            switch result {
-                            case .success(let value):
-                                message.imageView = UIImageView()
-                                message.imageView?.image = value.image
-                                var indexPaths: [IndexPath] = []
-                                indexPaths.append(indexPath)
-                                self.collectionView.performBatchUpdates {
-                                    self.collectionView.reloadItems(at: indexPaths)
-                                }
-                            case .failure(let error):
-                                print("이미지 로드 에러 \(error)")
-                            }
-                        }
-                    }
-                case .failure(let error):
-                    print("이미지 로드 에러 \(error)")
-                }
-            }
-            
-            cell.message = message
-            print("이미지 메세지 indexPath : \(indexPath)")
-        }
+//        if message.mediaURL == "" {
+//            cell.message = message
+//        } else if message.mediaURL.contains(".mov") {
+//            let imageView = UIImageView()
+//            print("동영상 메세지 입니다 in ChatController")
+//            message.imageView?.image = imageView.image
+//            cell.message = message
+//        } else {
+//            let urlString = message.mediaURL
+//            let imageView = UIImageView()
+//            message.imageView?.image = imageView.image
+//            cell.message = message
+//            print("이미지 메세지 indexPath : \(indexPath)")
+//        }
 
         
 //        cell.message = inSearchMode ? filteredMessages[indexPath.row] : messages[indexPath.row]
         
         
+        cell.message = message
+        
+        cell.layoutIfNeeded()
+        cell.layoutSubviews()
         print("메세지 Cell 패칭 인덱스 : \(indexPath.row)")
  
         return cell
