@@ -10,7 +10,9 @@ class MessageCell: UICollectionViewCell {
     var userInfo: User?
     
     var message: Message? {
-        didSet { configure() }
+        didSet {
+            configure()
+        }
     }
     
     var bubbleLeftAnchor: NSLayoutConstraint!
@@ -35,7 +37,11 @@ class MessageCell: UICollectionViewCell {
     
     private let pikedImageView: UIImageView = {
         let imageView = UIImageView()
-        
+//        imageView.setWidth(width: 200)
+        imageView.translatesAutoresizingMaskIntoConstraints = false
+//        imageView.image = UIImage(named: "imagePlaceholder.jpeg")
+        imageView.contentMode = .scaleAspectFill
+        imageView.setContentHuggingPriority(.defaultLow, for: .vertical)
         return imageView
     }()
     
@@ -48,6 +54,7 @@ class MessageCell: UICollectionViewCell {
     
     private let textView: UITextView = {
         let textView = UITextView()
+        textView.translatesAutoresizingMaskIntoConstraints = false
         textView.backgroundColor = .clear
         textView.font = UIFont.systemFont(ofSize: 14)
         textView.isScrollEnabled = false
@@ -59,6 +66,7 @@ class MessageCell: UICollectionViewCell {
     
     private let bubbleContainer: UIView = {
         let view = UIView()
+//        view.translatesAutoresizingMaskIntoConstraints = false
         view.backgroundColor = .systemCyan
         return view
     }()
@@ -81,6 +89,7 @@ class MessageCell: UICollectionViewCell {
         return label
     }()
     
+    
     // MARK: View Lifecycle
     
     override init(frame: CGRect) {
@@ -99,18 +108,18 @@ class MessageCell: UICollectionViewCell {
         bubbleContainer.anchor(top: nameLabel.bottomAnchor,bottom: bottomAnchor, paddingTop: 5)
         bubbleContainer.widthAnchor.constraint(lessThanOrEqualToConstant: 250).isActive = true
         bubbleContainer.layer.cornerRadius = 10
-//
+
         bubbleLeftAnchor = bubbleContainer.leftAnchor.constraint(equalTo: profileImageView.rightAnchor, constant: 10)
         bubbleLeftAnchor.isActive = false
-//
+
         bubbleRightAnchor = bubbleContainer.rightAnchor.constraint(equalTo: rightAnchor, constant: -10)
         bubbleRightAnchor.isActive = false
-//
+
         bubbleContainer.addSubview(textView)
         textView.anchor(top: bubbleContainer.topAnchor, left: bubbleContainer.leftAnchor, bottom: bubbleContainer.bottomAnchor, right: bubbleContainer.rightAnchor, paddingTop: 4, paddingLeft: 12, paddingBottom: 4,  paddingRight: 12)
         
                 
-        bubbleContainer.addSubview(pikedImageView)
+        
         
         addSubview(dateLabel)
         dateLabel.anchor(bottom: bubbleContainer.bottomAnchor, paddingBottom: 2)
@@ -121,6 +130,8 @@ class MessageCell: UICollectionViewCell {
         dateLabelLeftAnchor = dateLabel.leftAnchor.constraint(equalTo: bubbleContainer.rightAnchor, constant: 10)
         bubbleLeftAnchor.isActive = false
         
+        bubbleContainer.addSubview(pikedImageView)
+        pikedImageView.tag = 100
         pikedImageView.anchor(top: bubbleContainer.topAnchor, left: bubbleContainer.leftAnchor, bottom: bubbleContainer.bottomAnchor, right: bubbleContainer.rightAnchor, paddingTop: 12, paddingLeft: 12, paddingBottom: 12,  paddingRight: 12)
         
         addSubview(readedLabel)
@@ -141,6 +152,17 @@ class MessageCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
     
+//    override func prepareForReuse() {
+//        super.prepareForReuse()
+//        message = nil
+//        pikedImageView.removeFromSuperview()
+//        textView.removeFromSuperview()
+//        profileImageView.removeFromSuperview()
+//        nameLabel.removeFromSuperview()
+//        dateLabel.removeFromSuperview()
+//
+//    }
+    
     // MARK: Configrues and Helpers
     
     func configure() {
@@ -150,7 +172,6 @@ class MessageCell: UICollectionViewCell {
         query.getDocument { snapsot, error in
             guard let url = snapsot?.get("profileImageURL") else { return }
             let stringURL = String(describing: url)
-            print("이미지 URL : \(stringURL)")
             let imageURL = URL(string: stringURL)
             self.profileImageView.kf.setImage(with: imageURL)
         }
@@ -158,18 +179,36 @@ class MessageCell: UICollectionViewCell {
         let viewModel = MessageViewModel(message: message)
         
         bubbleContainer.backgroundColor = viewModel.messageBackgroundColor
-                
-        if message.mediaURL == "" {
+        
+        if message.imageView == nil {
+            print("텍스트 메세지 입니다")
+//            let imageViewWithTag = bubbleContainer.viewWithTag(100)
+//            imageViewWithTag?.removeFromSuperview()
+            
             textView.isHidden = false
             pikedImageView.isHidden = true
+            
             textView.text = message.text
         } else {
-            textView.isHidden = true
-            bubbleContainer.backgroundColor = .none
-            pikedImageView.image = message.imageView?.image
+            print("미디어 메세지 입니다.")
+            textView.isHidden = false
             pikedImageView.isHidden = false
+//            bubbleContainer.backgroundColor = .none
+            
+            let image = resizeImage(image: (message.imageView?.image)!)
+            pikedImageView.setDimensions(height: image.size.height, width: image.size.width)
+            
+            pikedImageView.image = image
+            
         }
-        
+                
+//        if message.mediaURL == "" {
+//
+//        } else if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
+//
+//
+//        } else { print ("동영상 메세지")}
+
         let date = message.timestamp.dateValue()
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "a HH:mm"
@@ -198,4 +237,22 @@ class MessageCell: UICollectionViewCell {
         profileImageView.isHidden = viewModel.sholudHideProfileImage
         nameLabel.isHidden = viewModel.sholudHideNameLabel
     }
+    
+    func resizeImage(image: UIImage) -> UIImage  {
+        
+        let originalWidth = image.size.width
+        let originalHeight = image.size.height
+        
+        let scaleFactor = 250 / originalWidth
+        let newHeight = originalHeight * scaleFactor
+        
+        UIGraphicsBeginImageContext(CGSize(width: 200, height: newHeight))
+        image.draw(in: CGRect(x: 0, y: 0, width: 200, height: newHeight))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage!
+    }
+
 }
+

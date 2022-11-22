@@ -49,8 +49,8 @@ class RoomsInfo {
     private init() { }
 }
 
-class MessageInfo {
-    static let shared = MessageInfo()
+class MessagesInfo {
+    static let shared = MessagesInfo()
     weak var delegate: MessagesInfoDelegate?
     
     var messages:[Message]? {
@@ -61,4 +61,12 @@ class MessageInfo {
     
     private init() { }
     
+}
+
+class MessagesInRoomInfo {
+    static let shared = MessagesInRoomInfo()
+    
+    var messagesInRoom:[MessagesInRoom]?
+    
+    private init() { }
 }

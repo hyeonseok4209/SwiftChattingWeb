@@ -179,6 +179,9 @@ extension NewChattingController {
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! UserCell
         cell.user = users[indexPath.row]
         cell.selectionStyle = .none
+        
+        print("스크롤 확인 \(indexPath)")
+        
         return cell
     }
 }

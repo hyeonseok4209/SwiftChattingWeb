@@ -65,12 +65,13 @@ class TabBarViewController: UITabBarController {
                 try await fetchCurrentUserInfo()
                 try await fetchUsersInfo()
                 try await fetchRoomsInfo()
+                try await FetchMessagesInfo()
         }
     }
     
     //MARK: Get Infos form API
     
-    //현재 유저 정보 업데이트
+    //현재 유저 정보 패칭
     func fetchCurrentUserInfo() async throws -> Void {
         guard let uid = Auth.auth().currentUser?.uid else { return }
         let query = COLLECTION_USERS.document(uid)
@@ -85,7 +86,7 @@ class TabBarViewController: UITabBarController {
         print("현재 접속유저 | 이메일: \(currentUserInfo.email),이름: \(currentUserInfo.name), 닉네임:\(currentUserInfo.nickname)")
     }
     
-    //현재 유저와 친구인 유저 정보 업데이트
+    //현재 유저와 친구인 유저 정보 패칭
     func fetchUsersInfo() async throws -> Void {
         let currentUser = CurrentUserInfo.shared
         let usersInfo = UsersInfo.shared
@@ -106,9 +107,9 @@ class TabBarViewController: UITabBarController {
         usersInfo.users = users
     }
     
-    // 현재유저가 멤버로 포함된 채팅방 업데이트
+    // 현재유저가 멤버로 포함된 채팅방 패칭
     func fetchRoomsInfo() async throws -> Void {
-        
+        print("채칭방 업데이트 시작")
         let currentUser = CurrentUserInfo.shared
         let roomsInfo = RoomsInfo.shared
         
@@ -127,9 +128,43 @@ class TabBarViewController: UITabBarController {
         }
         
         roomsInfo.rooms = rooms
+        print("채칭방 업데이트 완료")
+    }
+    
+    // 현재 유저가 포함된 채팅방의 모든 메세지 패칭
+    
+    func FetchMessagesInfo() async throws {
+        print("메세지 업데이트 시작")
+        let roomsInfo = RoomsInfo.shared
+        var messagesInRoomsInfo = MessagesInRoomInfo.shared
+        var messagesInRooms = [MessagesInRoom]()
+        guard let rooms = roomsInfo.rooms else { return }
+        
+        for (index, room) in rooms.enumerated() {
+   
+            var currentMessages = [Message]()
+            let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!)
+            let snapshot = try await query.getDocuments()
+            
+            snapshot.documents.forEach { document in
+                let dictionary = document.data()
+                let message = Message(dictionary: dictionary)
+                currentMessages.append(message)
+            }
+            
+            let data = [ "roomID" : room.id!,
+                         "messages" : currentMessages ] as [String : Any]
+            
+            let messageInfoInit = MessagesInRoom(dictionary: data)
+            messagesInRooms.append(messageInfoInit)
+        }
+        
+        messagesInRoomsInfo.messagesInRoom = messagesInRooms
+        
+        print("메세지 업데이트 완료")
     }
  
-    //유저 정보 업데이트
+    //유저 정보 패칭
     
     func fetchUsers() {
         let usersInfo = UsersInfo.shared
@@ -137,16 +172,16 @@ class TabBarViewController: UITabBarController {
         usersInfo.users = users
     }
 
-    //채팅방 정보 업데이트
+    //채팅방 정보 패칭
     func fetchRooms() {
         let roomsInfo = RoomsInfo.shared
         guard let rooms = roomsInfo.rooms else { return }
         roomsInfo.rooms = rooms
     }
     
-    //메세지 정보 업데이트
+    //메세지 정보 패칭
     func fetchMessages() {
-        let messagesInfo = MessageInfo.shared
+        let messagesInfo = MessagesInfo.shared
         guard let messages = messagesInfo.messages else { return }
         messagesInfo.messages = messages
     }

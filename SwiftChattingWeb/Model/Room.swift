@@ -19,7 +19,16 @@ struct Room {
         self.membersNickname = dictionary["membersNickname"] as? [String] ?? []
         self.recentMessage = dictionary["recentMessage"] as? String ?? ""
         self.timestamp = dictionary["timestamp"] as? Timestamp ?? Timestamp(date: Date())
-        
     }
+}
+
+struct MessagesInRoom {
+    var roomID: String
+    var messages: [Message]
     
+    init(dictionary: [String: Any]) {
+        
+        self.roomID = dictionary["roomID"] as? String ?? ""
+        self.messages = dictionary["messages"] as? [Message] ?? []
+    }
 }

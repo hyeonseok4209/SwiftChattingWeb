@@ -17,6 +17,7 @@ target 'SwiftChattingWeb' do
 	pod 'Kingfisher'
 	pod 'SDWebImage'
 	pod 'SideMenu'
+
 end
 
 post_install do |installer|

@@ -6,7 +6,6 @@ import AVFoundation
 import AVKit
 import SideMenu
 
-
 private let reuseIdentifier = "MessageCell"
 
 class ChatController: UICollectionViewController {
@@ -55,10 +54,10 @@ class ChatController: UICollectionViewController {
         if let index = unReadedMembers.firstIndex(of: currentUser.uid) {
             unReadedMembers.remove(at: index)
         }
-        
-        fecthUserInfofromMessage()
+                        
+//        fecthUserInfofromMessage()
         configureUI()
-        configureSearchController()
+//        configureSearchController()
         fechMessages()
 //        fechMessagesInfo()
     }
@@ -79,23 +78,25 @@ class ChatController: UICollectionViewController {
     
     @objc func handleSideMenu() {
         
-        inputAccessoryView?.removeFromSuperview()
+        collectionView.reloadData()
         
-        var sideMenuSet = SideMenuSettings()
-        sideMenuSet.presentationStyle = .menuSlideIn
-        sideMenuSet.presentationStyle.backgroundColor = .clear
-
-        let controller = SideMenuViewController()
-        controller.room = self.room
-        controller.messages = self.messages
-        
-        let sideMenu = SideMenuNavigationController(rootViewController: controller, settings: sideMenuSet)
-        
-        present(sideMenu, animated: true, completion: nil)
+//        inputAccessoryView?.removeFromSuperview()
+//
+//        var sideMenuSet = SideMenuSettings()
+//        sideMenuSet.presentationStyle = .menuSlideIn
+//        sideMenuSet.presentationStyle.backgroundColor = .clear
+//
+//        let controller = SideMenuViewController()
+//        controller.room = self.room
+//        controller.messages = self.messages
+//
+//        let sideMenu = SideMenuNavigationController(rootViewController: controller, settings: sideMenuSet)
+//
+//        present(sideMenu, animated: true, completion: nil)
     }
     
     // MARK: Firebase API
-    
+        
     func fechMessagesInfo() {
         let imageView = UIImageView()
         var messages = [Message]()
@@ -148,6 +149,23 @@ class ChatController: UICollectionViewController {
     }
     
     func fechMessages() {
+        guard let index = MessagesInRoomInfo.shared.messagesInRoom?.firstIndex(where: { messagesInRoom in
+            messagesInRoom.roomID == room.id
+        }) else { return }
+        
+        guard let messages = MessagesInRoomInfo.shared.messagesInRoom?[index].messages else { return }
+        
+        self.messages = messages
+          
+        let query =  COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
+        query.addSnapshotListener { snapshot, error in
+            snapshot?.documentChanges.forEach({ chagne in
+                
+            })
+        }
+    }
+        
+    func fechMessages_old() {
         
         let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
         let imageView = UIImageView()
@@ -239,17 +257,26 @@ class ChatController: UICollectionViewController {
     
     func configureUI() {
         
+        collectionView.bounces = false
+        
         navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(handleDismiss))
         
         navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: "line.3.horizontal"), style: .plain, target: self, action: #selector(handleSideMenu))
         
         collectionView.backgroundColor = .white
         collectionView.contentInset = UIEdgeInsets(top: 0, left: 0, bottom: 25, right: 0)
-        configureSearchController()
+//        configureSearchController()
         configurNavigationBar()
         
+//        let collectionViewLayout = CustumCollectionViewLayout()
+        let collectionViewLayout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
         collectionView.register(MessageCell.self, forCellWithReuseIdentifier: reuseIdentifier)
-        collectionView.alwaysBounceVertical = true
+//        collectionViewLayout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
+//        collectionViewLayout.minimumInteritemSpacing = 10
+//        collectionViewLayout.minimumLineSpacing = 10
+        collectionView.collectionViewLayout = collectionViewLayout
+        collectionView.contentInsetAdjustmentBehavior = .always
+        
         collectionView.keyboardDismissMode = .interactive
     }
     
@@ -340,17 +367,116 @@ class ChatController: UICollectionViewController {
 }
 
 extension ChatController {
+
     override func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return inSearchMode ? filteredMessages.count : messages.count
+        return messages.count
     }
-    
+                
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-                
+        
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! MessageCell
-                
-        cell.message = inSearchMode ? filteredMessages[indexPath.row] : messages[indexPath.row]
+        cell.backgroundColor = .red
+        var message = messages[indexPath.row]
+//        let imageView = UIImageView()
+//        imageView.contentMode = .scaleToFill
+//        imageView.setDimensions(height: 90, width: 200)
+//        imageView.image = UIImage(named: "imagePlaceholder")
+        
+        if message.mediaURL == "" {
+            cell.message = message
+        } else if message.mediaURL.contains(".mov") {
+            let imageView = UIImageView()
+            print("동영상 메세지 입니다 in ChatController")
+            message.imageView?.image = imageView.image
+            cell.message = message
+        } else {
+            let urlString = message.mediaURL
+
+            ImageCache.default.retrieveImage(forKey: urlString, options: nil) { result in
+                switch result {
+                case .success(let value):
+                    if value.image != nil {
+                        //캐시가 존재하는 경우
+                        message.imageView = UIImageView()
+                        message.imageView?.image = value.image
+                    } else {
+                        //캐시가 존재하지 않는 경우
+                        let url = URL(string: urlString)
+                        let resource = ImageResource(downloadURL: url!, cacheKey: urlString)
+                        let imageView = UIImageView()
+                        
+                        imageView.kf.setImage(
+                            with: resource,
+                            options: [.cacheMemoryOnly]) {
+                            result in
+                            switch result {
+                            case .success(let value):
+                                message.imageView = UIImageView()
+                                message.imageView?.image = value.image
+                                var indexPaths: [IndexPath] = []
+                                indexPaths.append(indexPath)
+                                self.collectionView.performBatchUpdates {
+                                    self.collectionView.reloadItems(at: indexPaths)
+                                }
+                            case .failure(let error):
+                                print("이미지 로드 에러 \(error)")
+                            }
+                        }
+                    }
+                case .failure(let error):
+                    print("이미지 로드 에러 \(error)")
+                }
+            }
+            
+            cell.message = message
+            print("이미지 메세지 indexPath : \(indexPath)")
+        }
+
+        
+//        cell.message = inSearchMode ? filteredMessages[indexPath.row] : messages[indexPath.row]
+        
+        
+        print("메세지 Cell 패칭 인덱스 : \(indexPath.row)")
  
         return cell
+    }
+    
+    func fetchImage(url: URL, indexPath: IndexPath) {
+        let imageView = UIImageView()
+        let message = messages[indexPath.row]
+                
+//        message.imageView?.image = imageView.image
+        
+        imageView.kf.setImage( with: url ) {
+            result in
+            switch result {
+            case .success(let value):
+                imageView.image = self.resizeImage(image: value.image)
+                message.imageView?.image = imageView.image
+                self.collectionView.performBatchUpdates ({
+                    self.collectionView.reloadItems(at: [indexPath])
+                })
+                print("이미지 메세지 불러오기 완료")
+            case .failure(let error):
+                print("이미지 메세지 불러오기 실패: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func resizeImage(image: UIImage) -> UIImage  {
+        
+        let originalWidth = image.size.width
+        let originalHeight = image.size.height
+        
+        let scaleFactor = 250 / originalWidth
+        let newHeight = originalHeight * scaleFactor
+        
+        UIGraphicsBeginImageContext(CGSize(width: 200, height: newHeight))
+        image.draw(in: CGRect(x: 0, y: 0, width: 200, height: newHeight))
+        let newImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+
+        return newImage!
     }
     
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
@@ -364,7 +490,7 @@ extension ChatController {
                 player.play()
             }
         }
-    }
+    }    
 }
 
 extension ChatController: UICollectionViewDelegateFlowLayout{
@@ -372,17 +498,29 @@ extension ChatController: UICollectionViewDelegateFlowLayout{
         return .init(top: 16, left: 8, bottom: 16, right: 8)
     }
     
+//    func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+//        <#code#>
+//    }
+    
+    
     func collectionView(_ collectionView: UICollectionView, layout collectionViewLayout: UICollectionViewLayout, sizeForItemAt indexPath: IndexPath) -> CGSize {
+
+        let estimatedHeight: CGFloat = 1000
+
         let frame = CGRect(x: 0 , y:0, width: view.frame.width, height: 80)
         let estimatedSizeCell = MessageCell(frame: frame)
         estimatedSizeCell.message = messages[indexPath.row]
+
         estimatedSizeCell.layoutIfNeeded()
-        
-        let targetSize = CGSize(width: view.frame.width, height: 1000)
+//        estimatedSizeCell.setNeedsLayout()
+        estimatedSizeCell.prepareForReuse()
+
+        let targetSize = CGSize(width: view.frame.width, height: estimatedHeight)
         let estimatedSize = estimatedSizeCell.systemLayoutSizeFitting(targetSize)
-        
-        return .init(width: view.frame.width, height: estimatedSize.height)
+
+        return CGSize(width: view.frame.width, height: estimatedSize.height)
     }
+
 }
 
 extension ChatController: CustomInputAccessoryViewDelegate {
@@ -409,7 +547,7 @@ extension ChatController: CustomInputAccessoryViewDelegate {
         COLLECTION_MESSAGES.document(id).setData(data)
         COLLECTION_ROOMS.document(roomID).updateData(["recentMessage" : message])
         
-        let messagesInfo = MessageInfo.shared
+        let messagesInfo = MessagesInfo.shared
         let setMessage = Message(dictionary: data)
         var getMessages = self.messages
         getMessages.append(setMessage)
@@ -506,22 +644,6 @@ extension ChatController: CustomInputAccessoryViewDelegate {
                 self.messages = getMessages
             }
         }
-    }
-           
-    func resizeImage(image: UIImage) -> UIImage  {
-        
-        let originalWidth = image.size.width
-        let originalHeight = image.size.height
-        
-        let scaleFactor = 250 / originalWidth
-        let newHeight = originalHeight * scaleFactor
-        
-        UIGraphicsBeginImageContext(CGSize(width: 200, height: newHeight))
-        image.draw(in: CGRect(x: 0, y: 0, width: 200, height: newHeight))
-        let newImage = UIGraphicsGetImageFromCurrentImageContext()
-        UIGraphicsEndImageContext()
-
-        return newImage!
     }
 }
 
