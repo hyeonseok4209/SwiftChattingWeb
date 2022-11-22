@@ -133,24 +133,7 @@ class ChattingMenuViewController: UIViewController {
         self.titleLabel.text = "\(self.currentUser.name)(\(self.currentUser.nickname))"
         self.emailLabel.text = self.currentUser.email
     }
-    
-    func fechtMemberInfo(indexPath: Int) async throws -> [String] {
-
-        let members = rooms[indexPath].members
-        print("인덱스 [ \(indexPath) ]의 룸 멤버스 : \(members) ")
-        var usersName:[String] = []
         
-        for member in members {
-            let query = COLLECTION_USERS.document(member)
-            let document = try await query.getDocument()
-            guard let dictionary = document.data() else { return [] }
-            let userInfo = User(dictionary: dictionary)
-            usersName.append(userInfo.name)
-        }
-            
-        return usersName
-    }
-    
 //    func fechtMemberInfo(indexPath: Int) async throws -> [String] {
 //        let members = rooms[indexPath].members
 //        var usersName:[String] = []
@@ -257,10 +240,7 @@ extension ChattingMenuViewController: UITableViewDataSource {
         
         let cell = tableView.dequeueReusableCell(withIdentifier: reuseIdentifier, for: indexPath) as! ChatCell
         cell.backgroundColor = UIColor.init(hexString: 0xfbfbfb)
-        async {
-            cell.usersName = try await fechtMemberInfo(indexPath: indexPath.row)
             cell.room = rooms[indexPath.row]
-        }
 
         return cell
     }
@@ -275,7 +255,6 @@ extension ChattingMenuViewController: UITableViewDelegate {
         nav.modalPresentationStyle = .fullScreen
         present(nav, animated: true, completion: nil)
     }
-    
 }
 
 // MARK: NewChattingControllerDelegate

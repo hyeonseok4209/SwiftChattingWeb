@@ -172,8 +172,9 @@ class SettingMenuViewController: UIViewController {
         let currentUserInfo = CurrentUserInfo.shared
         guard let uid = currentUserInfo.currentUserInfo?.uid else { return }
  
-        let query = COLLECTION_USERS.document(uid)
-        query.updateData(["nickname" : textInput])
+        let queryforUser = COLLECTION_USERS.document(uid)
+        queryforUser.updateData(["nickname" : textInput])
+                
         currentUserInfo.currentUserInfo?.nickname = textInput
         self.nicknameLabel.text = textInput
     }

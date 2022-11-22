@@ -8,9 +8,7 @@ class ChatCell: UITableViewCell {
     var room: Room? {
         didSet { configure() }
     }
-        
-    var usersName: [String] = []
-    
+            
     private let roomNameLabel: UILabel = {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 18)
@@ -47,7 +45,7 @@ class ChatCell: UITableViewCell {
     
     func configure() {
         guard let room = self.room else { return }
-        roomNameLabel.text = self.usersName.joined(separator: ", ")
+        roomNameLabel.text = room.membersName.joined(separator: ", ")
         recentMessageLabel.text = room.recentMessage
     }
 }

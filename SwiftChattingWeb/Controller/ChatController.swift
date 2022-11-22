@@ -62,6 +62,7 @@ class ChatController: UICollectionViewController {
 //        fechMessagesInfo()
     }
     
+    
     override var inputAccessoryView: UIView? {
         get { return customInputView }
     }
@@ -77,166 +78,64 @@ class ChatController: UICollectionViewController {
     }
     
     @objc func handleSideMenu() {
-        
-        collectionView.reloadData()
-        
-//        inputAccessoryView?.removeFromSuperview()
-//
-//        var sideMenuSet = SideMenuSettings()
-//        sideMenuSet.presentationStyle = .menuSlideIn
-//        sideMenuSet.presentationStyle.backgroundColor = .clear
-//
-//        let controller = SideMenuViewController()
-//        controller.room = self.room
-//        controller.messages = self.messages
-//
-//        let sideMenu = SideMenuNavigationController(rootViewController: controller, settings: sideMenuSet)
-//
-//        present(sideMenu, animated: true, completion: nil)
+ 
+        inputAccessoryView?.removeFromSuperview()
+
+        var sideMenuSet = SideMenuSettings()
+        sideMenuSet.presentationStyle = .menuSlideIn
+        sideMenuSet.presentationStyle.backgroundColor = .clear
+
+        let controller = SideMenuViewController()
+        controller.room = self.room
+        controller.messages = self.messages
+
+        let sideMenu = SideMenuNavigationController(rootViewController: controller, settings: sideMenuSet)
+
+        present(sideMenu, animated: true, completion: nil)
     }
     
     // MARK: Firebase API
-        
-    func fechMessagesInfo() {
-        let imageView = UIImageView()
-        var messages = [Message]()
-        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
-        query.getDocuments { snapshot, error in
-            snapshot?.documents.forEach({ document in
-                let dictionary = document.data()
-                var message = Message(dictionary: dictionary)
-                if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
-                    let url = URL(string: message.mediaURL)
-                    imageView.kf.setImage(with: url) {
-                        result in
-                        switch result {
-                        case .success(let value):
-                            imageView.image = self.resizeImage(image: value.image)
-                            message.imageView = imageView
-                            messages.append(message)
-                            self.messages = messages
-                            self.collectionView.reloadData()
-                            self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-                            self.removeUnreadedMember()
-                        case .failure(let error):
-                            print("이미지 불러오기 실패: \(error.localizedDescription)")
-                        }
-                    }
-                } else if message.mediaURL != "" && message.mediaURL.contains(".mov") {
-                    guard let url = URL(string: message.mediaURL) else { return }
-                    print("동영상 URL \(url)")
-                    let asset: AVAsset = AVAsset(url: url)
-                    let imageGenerator = AVAssetImageGenerator(asset: asset)
-                    do {
-                        let thumbnailImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
-                        imageView.image = self.resizeImage(image: UIImage(cgImage: thumbnailImage))
-                        message.imageView = imageView
-                        messages.append(message)
-                        self.messages = messages
-                        self.collectionView.reloadData()
-                        self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-                        self.removeUnreadedMember()
-                    } catch { print("썸네일 에러") }
-                } else {
-                    messages.append(message)
-                    self.messages = messages
-                    self.collectionView.reloadData()
-                    self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-                    self.removeUnreadedMember()
-                }
-            })
-        }
-    }
     
     func fechMessages() {
         guard let index = MessagesInRoomInfo.shared.messagesInRoom?.firstIndex(where: { messagesInRoom in
             messagesInRoom.roomID == room.id
         }) else { return }
         
-        guard let messages = MessagesInRoomInfo.shared.messagesInRoom?[index].messages else { return }
+        guard var messagesinRoom = MessagesInRoomInfo.shared.messagesInRoom?[index].messages else { return }
         
-        self.messages = messages
-          
+        self.messages = messagesinRoom
+           
         let query =  COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
-        query.addSnapshotListener { snapshot, error in
-            snapshot?.documentChanges.forEach({ chagne in
-                
-            })
-        }
-    }
-        
-    func fechMessages_old() {
-        
-        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
-        let imageView = UIImageView()
-        var messages = self.messages
-        query.addSnapshotListener { snapshot, error in
-            snapshot?.documentChanges.forEach({ change in
-                let dictionary = change.document.data()
-                var message = Message(dictionary: dictionary)
-                if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
-                    let url = URL(string: message.mediaURL)
-                    imageView.kf.setImage(with: url) {
-                        result in
-                        switch result {
-                        case .success(let value):
-                            imageView.image = self.resizeImage(image: value.image)
-                            message.imageView = imageView
-                            messages.append(message)
-                            self.messages = messages
-                            self.collectionView.reloadData()
-                            self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-                            self.removeUnreadedMember()
-                        case .failure(let error):
-                            print("이미지 불러오기 실패: \(error.localizedDescription)")
-                        }
-                    }
-                } else if message.mediaURL != "" && message.mediaURL.contains(".mov") {
-                    guard let url = URL(string: message.mediaURL) else { return }
-                    print("동영상 URL \(url)")
-                    let asset: AVAsset = AVAsset(url: url)
-                    let imageGenerator = AVAssetImageGenerator(asset: asset)
-                    do {
-                        let thumbnailImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
-                        imageView.image = self.resizeImage(image: UIImage(cgImage: thumbnailImage))
-                        message.imageView = imageView
-                        messages.append(message)
-                        self.messages = messages
+        query.addSnapshotListener { querySnapshot, error in
+            
+            guard let snapshot = querySnapshot else {
+                print("Error fetching snapshots: \(error!)")
+                return
+            }
+            var snapshotCount = snapshot.documents.count - 1
+            print("스냅샷 전체 다큐먼트 양 \(snapshot.documents.count)")
+            
+            snapshot.documentChanges.forEach({ (change) in
+                if (change.type == .added) {
+                    
+                    if snapshotCount == change.newIndex {
+                        print("Add 메세지 패칭 :\(change.newIndex)")
+                        let dictionary = change.document.data()
+                        let message = Message(dictionary: dictionary)
+                        self.messages.append(message)
+                        messagesinRoom = self.messages
                         self.collectionView.reloadData()
-                        self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-                        self.removeUnreadedMember()
-                    } catch { print("썸네일 에러") }
-                } else {
-                    messages.append(message)
-                    self.messages = messages
-                    self.collectionView.reloadData()
-                    self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-                    self.removeUnreadedMember()
+                        self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: false)
+                    }
+                }
+                
+                if (change.type == .modified) {
+                    print("modified 메세지 패칭")
                 }
             })
         }
     }
-        
-//    func fechMessages() {
-//
-//        let query = COLLECTION_MESSAGES.whereField("roomID", isEqualTo: room.id!).order(by: "timestamp")
-//        var messages = self.messages
-//        query.addSnapshotListener { snapshot, error in
-//            snapshot?.documentChanges.forEach({ change in
-//                if change.type == .added {
-//                    print("메세지 리스너 감지")
-//                    let dictionary = change.document.data()
-//                    var message = Message(dictionary: dictionary)
-//                    messages.append(message)
-//                    self.messages = messages
-//
-//                    self.collectionView.reloadData()
-//                    self.collectionView.scrollToItem(at: [0, self.messages.count - 1], at: .bottom, animated: true)
-//                    self.removeUnreadedMember()
-//                }
-//            })
-//        }
-//    }
+
     
     func fetchCurrentChatUsers() async throws -> [User]? {
         let members = room.members
@@ -275,12 +174,9 @@ class ChatController: UICollectionViewController {
         let collectionViewLayout: UICollectionViewFlowLayout = UICollectionViewFlowLayout()
         collectionViewLayout.estimatedItemSize = CGSize(width: view.frame.width , height: 800)
         collectionView.register(MessageCell.self, forCellWithReuseIdentifier: reuseIdentifier)
-//        collectionViewLayout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-//        collectionViewLayout.minimumInteritemSpacing = 10
-//        collectionViewLayout.minimumLineSpacing = 10
+        (collectionView as UIScrollView).setContentOffset(.zero, animated: true)
         collectionView.collectionViewLayout = collectionViewLayout
         collectionView.contentInsetAdjustmentBehavior = .always
-        
         collectionView.keyboardDismissMode = .interactive
     }
     
@@ -379,7 +275,7 @@ extension ChatController {
     override func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: reuseIdentifier, for: indexPath) as! MessageCell
-        cell.backgroundColor = .red
+        cell.backgroundColor = .white
         var message = messages[indexPath.row]
 //        let imageView = UIImageView()
 //        imageView.contentMode = .scaleToFill
@@ -389,26 +285,61 @@ extension ChatController {
         if message.mediaURL == "" {
             cell.message = message
         } else if message.mediaURL.contains(".mov") {
+            //동영상 메세지 로드
+            let urlString = message.mediaURL
+            guard let url = URL(string: urlString) else { return cell }
+            print("동영상 URL : \(url)")
             let imageView = UIImageView()
-            print("동영상 메세지 입니다 in ChatController")
+            imageView.setDimensions(height: 150, width: 200)
+            imageView.contentMode = .scaleAspectFill
+            imageView.image = UIImage(named: "imagePlaceholder.jpeg")
+            message.imageView = imageView
             message.imageView?.image = imageView.image
+            
+            let asset: AVAsset = AVAsset(url: url as URL)
+            let imageGenerator = AVAssetImageGenerator(asset: asset)
+            do {
+                let thumbnailImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
+                message.imageView = UIImageView()
+                message.imageView?.image = UIImage(cgImage: thumbnailImage)
+                print("동영상 섬네일 로드 완료")
+            } catch { print("동영상 썸네일 에러") }
+            
+//            AVAsset(url: url).generateThumbnail { [weak self] (image) in
+//                DispatchQueue.main.async {
+//                    print("동영상 섬네일 로드 시작")
+//                    guard let image = image else { return }
+//                    message.imageView = UIImageView()
+//                    message.imageView?.image = image
+//                    print("동영상 섬네일 로드 완료")
+//                }
+//            }
+            
             cell.message = message
         } else {
+            //이미지 메세지 로드
+            
             let urlString = message.mediaURL
+            
+            let imageView = UIImageView()
+            imageView.setDimensions(height: 150, width: 200)
+            imageView.contentMode = .scaleAspectFill
+            imageView.image = UIImage(named: "imagePlaceholder.jpeg")
+            message.imageView = imageView
+            message.imageView?.image = imageView.image
 
             ImageCache.default.retrieveImage(forKey: urlString, options: nil) { result in
                 switch result {
                 case .success(let value):
                     if value.image != nil {
                         //캐시가 존재하는 경우
-                        message.imageView = UIImageView()
                         message.imageView?.image = value.image
                     } else {
                         //캐시가 존재하지 않는 경우
                         let url = URL(string: urlString)
                         let resource = ImageResource(downloadURL: url!, cacheKey: urlString)
                         let imageView = UIImageView()
-                        
+                                                
                         imageView.kf.setImage(
                             with: resource,
                             options: [.cacheMemoryOnly]) {
@@ -433,7 +364,6 @@ extension ChatController {
             }
             
             cell.message = message
-            print("이미지 메세지 indexPath : \(indexPath)")
         }
 
         
@@ -441,33 +371,11 @@ extension ChatController {
         
         cell.layoutIfNeeded()
         cell.layoutSubviews()
-        print("메세지 Cell 패칭 인덱스 : \(indexPath.row)")
  
         return cell
     }
     
-    func fetchImage(url: URL, indexPath: IndexPath) {
-        let imageView = UIImageView()
-        let message = messages[indexPath.row]
-                
-//        message.imageView?.image = imageView.image
-        
-        imageView.kf.setImage( with: url ) {
-            result in
-            switch result {
-            case .success(let value):
-                imageView.image = self.resizeImage(image: value.image)
-                message.imageView?.image = imageView.image
-                self.collectionView.performBatchUpdates ({
-                    self.collectionView.reloadItems(at: [indexPath])
-                })
-                print("이미지 메세지 불러오기 완료")
-            case .failure(let error):
-                print("이미지 메세지 불러오기 실패: \(error.localizedDescription)")
-            }
-        }
-    }
-    
+ 
     func resizeImage(image: UIImage) -> UIImage  {
         
         let originalWidth = image.size.width
@@ -483,7 +391,7 @@ extension ChatController {
 
         return newImage!
     }
-    
+        
     override func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if messages[indexPath.row].mediaURL.contains(".mov") {
             guard let url = URL(string: messages[indexPath.row].mediaURL) else { return }
@@ -551,13 +459,7 @@ extension ChatController: CustomInputAccessoryViewDelegate {
         
         COLLECTION_MESSAGES.document(id).setData(data)
         COLLECTION_ROOMS.document(roomID).updateData(["recentMessage" : message])
-        
-        let messagesInfo = MessagesInfo.shared
-        let setMessage = Message(dictionary: data)
-        var getMessages = self.messages
-        getMessages.append(setMessage)
-        self.messages = getMessages
-             
+              
         inputView.messageInputTextView.text = nil
     }
     
@@ -588,23 +490,6 @@ extension ChatController: CustomInputAccessoryViewDelegate {
                 COLLECTION_MESSAGES.document(id).setData(data)
                 COLLECTION_ROOMS.document(roomID).updateData(["recentMessage" : "사진을 보냈습니다"])
                 
-                let imageView = UIImageView()
-                let kfUrl = URL(string: imageURL)
-    
-                imageView.kf.setImage(with: kfUrl) {
-                    result in
-                    switch result {
-                    case .success(let value):
-                        imageView.image = self.resizeImage(image: value.image)
-                        var setMessage = Message(dictionary: data)
-                        setMessage.imageView = imageView
-                        var getMessages = self.messages
-                        getMessages.append(setMessage)
-                        self.messages = getMessages
-                    case .failure(let error):
-                        print("이미지 업로드 실패: \(error.localizedDescription)")
-                    }
-                }
             }
         }
     }
@@ -614,14 +499,7 @@ extension ChatController: CustomInputAccessoryViewDelegate {
         guard let roomID = self.room.id else { return }
         let imageView = UIImageView()
         let id = COLLECTION_MESSAGES.document().documentID
-        let ref = Storage.storage().reference(withPath: "/videos/\(id)")
-        
-        let asset: AVAsset = AVAsset(url: videoURL as URL)
-        let imageGenerator = AVAssetImageGenerator(asset: asset)
-        do {
-            let thumbnailImage = try imageGenerator.copyCGImage(at: CMTimeMake(value: 1, timescale: 60), actualTime: nil)
-            imageView.image = self.resizeImage(image: UIImage(cgImage: thumbnailImage))
-        } catch { print("썸네일 에러") }
+        let ref = Storage.storage().reference(withPath: "/videos/\(id).mov")
         
         ref.putFile(from: videoURL as URL, metadata: nil) {(meta, error) in
             ref.downloadURL { url, error in
@@ -635,18 +513,12 @@ extension ChatController: CustomInputAccessoryViewDelegate {
                             "fromID": self.currentUser.uid,
                             "userName": self.currentUser.name,
                             "userNickname": self.currentUser.nickname,
-                            "mediaURL" : "\(getURL).mov",
+                            "mediaURL" : "\(getURL)",
                             "unReadedMember" : self.unReadedMembers,
                             "timestamp": Timestamp(date: Date())] as [String : Any]
                 
                 COLLECTION_MESSAGES.document(id).setData(data)
                 COLLECTION_ROOMS.document(roomID).updateData(["recentMessage" : "동영상을 보냈습니다"])
-
-                var setMessage = Message(dictionary: data)
-                setMessage.imageView = imageView
-                var getMessages = self.messages
-                getMessages.append(setMessage)
-                self.messages = getMessages
             }
         }
     }
@@ -661,5 +533,24 @@ extension ChatController: UISearchResultsUpdating {
         })
         
         self.collectionView.reloadData()
+    }
+}
+
+extension AVAsset {
+    
+    func generateThumbnail(completion: @escaping (UIImage?) -> Void) {
+        DispatchQueue.global().async {
+            let imageGenerator = AVAssetImageGenerator(asset: self)
+            let time = CMTime(seconds: 0.0, preferredTimescale: 600)
+            let times = [NSValue(time: time)]
+            imageGenerator.generateCGImagesAsynchronously(forTimes: times, completionHandler: { _, image, _, _, _ in
+                if let image = image {
+                    completion(UIImage(cgImage: image))
+                } else {
+                    print("동영상 섬네일 이미지 로드 실패")
+                    completion(nil)
+                }
+            })
+        }
     }
 }
