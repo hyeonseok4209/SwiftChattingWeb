@@ -154,11 +154,12 @@ class MessageCell: UICollectionViewCell {
     
     override func prepareForReuse() {
         super.prepareForReuse()
-//        pikedImageView = UIImageView()
+
         pikedImageView.isHidden = true
         textView.isHidden = true
         
         pikedImageView.image = nil
+
 //        message = nil
 //        pikedImageView.removeFromSuperview()
 //        textView.removeFromSuperview()
@@ -185,101 +186,36 @@ class MessageCell: UICollectionViewCell {
         
         bubbleContainer.backgroundColor = viewModel.messageBackgroundColor
         
-//        if message.imageView == nil {
-//            print("텍스트 메세지 입니다")
+        if message.imageView == nil {
+            print("텍스트 메세지 입니다")
 //            let imageViewWithTag = bubbleContainer.viewWithTag(100)
 //            imageViewWithTag?.removeFromSuperview()
-//
-//            textView.isHidden = false
-//            pikedImageView.isHidden = true
-//
-//            textView.text = message.text
-//        } else {
-//            print("미디어 메세지 입니다.")
-//            textView.isHidden = true
-//            pikedImageView.isHidden = false
-//            bubbleContainer.backgroundColor = .none
-//
-//            let image = resizeImage(image: (message.imageView?.image)!)
-//            pikedImageView.setDimensions(height: image.size.height, width: image.size.width)
-//
-//            pikedImageView.image = image
-//
-//            self.contentView.setNeedsLayout()
-//            self.contentView.layoutIfNeeded()
-//
-//        }
-                
-        if message.mediaURL == "" {
             
-            print("텍스트 메세지 입니다")
-  
             textView.isHidden = false
             pikedImageView.isHidden = true
             
             textView.text = message.text
-            
-
-        } else if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
-            
-            print("이미지 메세지 입니다")
-            
+        } else {
+            print("미디어 메세지 입니다.")
             textView.isHidden = true
             pikedImageView.isHidden = false
+            bubbleContainer.backgroundColor = .none
             
-            let urlString = message.mediaURL
+            let image = resizeImage(image: (message.imageView?.image)!)
+           
+            pikedImageView.image = image
             
-            ImageCache.default.retrieveImage(forKey: urlString, options: nil) { result in
-                switch result {
-                case .success(let value):
-                    if value.image != nil {
-                        //캐시가 존재하는 경우
-                        print("이미지 캐시 처리")
-                        let image = self.resizeImage(image: value.image!)
-                        self.pikedImageView.image = image
-                        
-                        self.contentView.setNeedsLayout()
-                        self.contentView.layoutIfNeeded()
-                    } else {
-                        //캐시가 존재하지 않는 경우
-                        print("이미지 캐시없이 직접 로드")
-                        let url = URL(string: urlString)
-                        let resource = ImageResource(downloadURL: url!, cacheKey: urlString)
-                        let imageView = UIImageView()
-                        
-                        print("이미지 URL : \(urlString)")
-                        
-                        imageView.kf.setImage(
-                            with: resource,
-                            options: [.cacheMemoryOnly]) {
-                            result in
-                            switch result {
-                            case .success(let value):
-                                let image = self.resizeImage(image: value.image)
-                                self.pikedImageView.image = image
-                                
-                                self.contentView.setNeedsLayout()
-                                self.contentView.layoutIfNeeded()
-                                
-                            case .failure(let error):
-                                print("이미지 로드 에러 \(error)")
-                            }
-                        }
-                    }
-                case .failure(let error):
-                    print("이미지 로드 에러 \(error)")
-                }
-            }
-
-
-        } else {
-            print("동영상 메세지 입니다")
-  
-            textView.isHidden = false
-            pikedImageView.isHidden = true
+            self.contentView.setNeedsLayout()
+            self.contentView.layoutIfNeeded()
             
-            textView.text = "동영상 메세지 입니다"
         }
+                
+//        if message.mediaURL == "" {
+//
+//        } else if message.mediaURL != "" && !message.mediaURL.contains(".mov") {
+//
+//
+//        } else { print ("동영상 메세지")}
 
         let date = message.timestamp.dateValue()
         let dateFormatter = DateFormatter()
